@@ -1,5 +1,8 @@
 import itertools
 from aocd import get_data
+from aocd import submit
+from aocd.models import Puzzle
+from icecream import ic
 
 
 def extract_number_portion(input_line: str, text_numbers: list[str]) -> int:
@@ -54,8 +57,7 @@ def get_part1_extracted_number(input_line: str) -> int:
             break
     return int(f'{first_digit}{last_digit}')
 
-
-if __name__ == '__main__':
+def main():
     # data = get_data(day=1, year=2023).splitlines()
     data = ['1abc2', 'pqr3stu8vwx', 'a1b2c3d4e5f', 'treb7uchet']
     data_part2 = ['two1nine', 'eightwothree', 'abcone2threexyz', 'xtwone3four', '4nineeightseven2', 'zoneight234',
@@ -70,3 +72,13 @@ if __name__ == '__main__':
     for current_line in data_part2:
         extracted_numbers_part2.append(get_part2_extracted_number(current_line))
     print(f'Part 2 {sum(extracted_numbers_part2)}')
+
+
+if __name__ == '__main__':
+    puzzle = Puzzle(year=2023, day=1)
+
+    ic(puzzle.input_data)
+    ic(puzzle.answer_a)
+    ic(puzzle.answer_b)
+
+    # main()

@@ -31,27 +31,25 @@ def part1_solve(list1: list[int], list2: list[int]) -> int:
 def part2_solve(list1: list[int], list2: list[int]) -> int:
     scores = []
     list2_counts = Counter(list2)
-    for index in range(len(list1)):
-        list1_number = list1[index]
-        matches = list2_counts.get(list1[index])
+    for list1_number in list1:
+        matches = list2_counts.get(list1_number)
         scores.append(0 if matches is None else matches * list1_number)
     return sum(scores)
 
 
 def main() -> None:
     puzzle = Puzzle(year=2024, day=2)
-    data = puzzle.input_data.splitlines()
-    # data = [
-    #     '3   4',
-    #     '4   3',
-    #     '2   5',
-    #     '1   3',
-    #     '3   9',
-    #     '3   3'
-    # ]
-    list1, list2 = read_lists(data)
-    puzzle.answer_a = ic(part1_solve(list1, list2))
-    puzzle.answer_b = ic(part2_solve(list1, list2))
+    example = puzzle.examples.pop()
+    example_list1, example_list2 = read_lists(example.input_data.splitlines())
+    list1, list2 = read_lists(puzzle.input_data.splitlines())
+
+    if int(example.answer_a) == ic(part1_solve(example_list1, example_list2)):
+        puzzle.answer_a = ic(part1_solve(list1, list2))
+
+    # Example answer b is not parsing right from input
+    # if int(example.answer_b) == ic(part2_solve(example_list1, example_list2)):
+    if 31 == ic(part2_solve(example_list1, example_list2)):
+        puzzle.answer_b = ic(part2_solve(list1, list2))
 
 
 if __name__ == '__main__':

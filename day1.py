@@ -46,7 +46,7 @@ def main() -> None:
     if int(example.answer_a) == ic(part1_solve(example_list1, example_list2)):
         puzzle.answer_a = ic(part1_solve(list1, list2))
 
-    # Example answer b is not parsing right from input
+    # Example answer b is not parsing right from  says 9 when it is supposed to be 31
     # if int(example.answer_b) == ic(part2_solve(example_list1, example_list2)):
     if 31 == ic(part2_solve(example_list1, example_list2)):
         puzzle.answer_b = ic(part2_solve(list1, list2))

@@ -31,13 +31,12 @@ def report_error_counts(diffs: list[int]) -> list[int]:
     return errors
 
 
-def part1_solve(input_lines: list[str], allowed_errors=0) -> int:
+def part1_solve(input_lines: list[str]) -> int:
     safe_reports = 0
     for line in input_lines:
         report_values = parse_line(line)
         current_errors = report_details(report_values)
-        if len(current_errors) == allowed_errors:
-            safe_reports += 1
+        safe_reports += 1 if len(current_errors) == 0 else 0
     return safe_reports
 
 
@@ -49,18 +48,19 @@ def part2_solve(input_lines: list[str]) -> int:
         if len(current_errors) == 0:
             safe_reports += 1
             continue
+
         pair_issue_index = current_errors.pop()
         report_values.pop(pair_issue_index)
         current_errors = report_details(report_values)
         if len(current_errors) == 0:
             safe_reports += 1
             continue
+
         report_values = parse_line(line)
         report_values.pop(pair_issue_index + 1)
         current_errors = report_details(report_values)
-        if len(current_errors) == 0:
-            safe_reports += 1
-            continue
+        safe_reports += 1 if len(current_errors) == 0 else 0
+
     return safe_reports
 
 
@@ -74,11 +74,14 @@ def main() -> None:
     puzzle = Puzzle(year=2024, day=2)
     example = puzzle.examples.pop()
 
-    if int(example.answer_a) == ic(part1_solve(example.input_data.splitlines())):
-        puzzle.answer_a = ic(part1_solve(puzzle.input_data.splitlines()))
+    input_lines = puzzle.input_data.splitlines()
+    example_lines = example.input_data.splitlines()
 
-    if int(example.answer_b) == ic(part2_solve(example.input_data.splitlines(), )):
-        puzzle.answer_b = ic(part2_solve(puzzle.input_data.splitlines()))
+    if int(example.answer_a) == ic(part1_solve(example_lines)):
+        puzzle.answer_a = ic(part1_solve(input_lines))
+
+    if int(example.answer_b) == ic(part2_solve(example_lines)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

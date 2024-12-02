@@ -17,33 +17,57 @@ def get_pair_diffs(computed_pairs, is_decreasing) -> list[int]:
     return diffs
 
 
-def is_report_safe(diffs: list[int], is_decreasing: bool) -> bool:
-    for current_diff in diffs:
+def report_error_counts(diffs: list[int]) -> list[int]:
+    errors = []
+    for index in range(len(diffs)):
+        current_diff = diffs[index]
         if current_diff <= 0:
-            return False
+            errors.append(index)
+            continue
         if current_diff > 3:
-            return False
+            errors.append(index)
+            continue
         continue
-    return True
+    return errors
 
 
-def part1_solve(input_lines: list[str]) -> int:
+def part1_solve(input_lines: list[str], allowed_errors=0) -> int:
     safe_reports = 0
     for line in input_lines:
         report_values = parse_line(line)
-        is_decreasing = report_values[0] > report_values[-1]
-        pair_diffs = ic(get_pair_diffs(itertools.pairwise(report_values), is_decreasing))
-        safe_reports += 1 if is_report_safe(pair_diffs, is_decreasing) else 0
+        current_errors = report_details(report_values)
+        if len(current_errors) == allowed_errors:
+            safe_reports += 1
     return safe_reports
 
 
-def part2_solve(list1: list[int], list2: list[int]) -> int:
-    scores = []
-    list2_counts = Counter(list2)
-    for list1_number in list1:
-        matches = list2_counts.get(list1_number)
-        scores.append(0 if matches is None else matches * list1_number)
-    return sum(scores)
+def part2_solve(input_lines: list[str]) -> int:
+    safe_reports = 0
+    for line in input_lines:
+        report_values = parse_line(line)
+        current_errors = report_details(report_values)
+        if len(current_errors) == 0:
+            safe_reports += 1
+            continue
+        pair_issue_index = current_errors.pop()
+        report_values.pop(pair_issue_index)
+        current_errors = report_details(report_values)
+        if len(current_errors) == 0:
+            safe_reports += 1
+            continue
+        report_values = parse_line(line)
+        report_values.pop(pair_issue_index + 1)
+        current_errors = report_details(report_values)
+        if len(current_errors) == 0:
+            safe_reports += 1
+            continue
+    return safe_reports
+
+
+def report_details(report_values: list[int]) -> dict:
+    is_decreasing = report_values[0] > report_values[-1]
+    pair_diffs = ic(get_pair_diffs(itertools.pairwise(report_values), is_decreasing))
+    return report_error_counts(pair_diffs)
 
 
 def main() -> None:
@@ -53,10 +77,8 @@ def main() -> None:
     if int(example.answer_a) == ic(part1_solve(example.input_data.splitlines())):
         puzzle.answer_a = ic(part1_solve(puzzle.input_data.splitlines()))
 
-    # Example answer b is not parsing right from  says 9 when it is supposed to be 31
-    # if int(example.answer_b) == ic(part2_solve(example_list1, example_list2)):
-    # if 31 == ic(part2_solve(example_list1, example_list2)):
-    #     puzzle.answer_b = ic(part2_solve(list1, list2))
+    if int(example.answer_b) == ic(part2_solve(example.input_data.splitlines(), )):
+        puzzle.answer_b = ic(part2_solve(puzzle.input_data.splitlines()))
 
 
 if __name__ == '__main__':

@@ -1,3 +1,4 @@
+import itertools
 from collections import Counter
 from typing import Tuple
 from aocd.models import Puzzle
@@ -5,27 +6,35 @@ from icecream import ic
 from parse import parse
 
 
-def read_lists(lines_to_parse: list[str]) -> Tuple[list[int], list[int]]:
-    list1 = []
-    list2 = []
-
-    for input_line in lines_to_parse:
-        number1, spacer, number2 = parse('{:d}{:s}{:d}', input_line)
-        list1.append(number1)
-        list2.append(number2)
-    list1.sort()
-    list2.sort()
-    return list1, list2
+def parse_line(input_line: str) -> list[int]:
+    return [int(x) for x in input_line.split(" ")]
 
 
-def part1_solve(list1: list[int], list2: list[int]) -> int:
+def get_pair_diffs(computed_pairs, is_decreasing) -> list[int]:
     diffs = []
-    for index in range(len(list1)):
-        list1_number = list1[index]
-        list2_number = list2[index]
-        diff = abs(list1_number - list2_number)
-        diffs.append(diff)
-    return sum(diffs)
+    for pair in computed_pairs:
+        diffs.append(pair[0] - pair[1] if is_decreasing else pair[1] - pair[0])
+    return diffs
+
+
+def is_report_safe(diffs: list[int], is_decreasing: bool) -> bool:
+    for current_diff in diffs:
+        if current_diff <= 0:
+            return False
+        if current_diff > 3:
+            return False
+        continue
+    return True
+
+
+def part1_solve(input_lines: list[str]) -> int:
+    safe_reports = 0
+    for line in input_lines:
+        report_values = parse_line(line)
+        is_decreasing = report_values[0] > report_values[-1]
+        pair_diffs = ic(get_pair_diffs(itertools.pairwise(report_values), is_decreasing))
+        safe_reports += 1 if is_report_safe(pair_diffs, is_decreasing) else 0
+    return safe_reports
 
 
 def part2_solve(list1: list[int], list2: list[int]) -> int:
@@ -40,16 +49,14 @@ def part2_solve(list1: list[int], list2: list[int]) -> int:
 def main() -> None:
     puzzle = Puzzle(year=2024, day=2)
     example = puzzle.examples.pop()
-    example_list1, example_list2 = read_lists(example.input_data.splitlines())
-    list1, list2 = read_lists(puzzle.input_data.splitlines())
 
-    if int(example.answer_a) == ic(part1_solve(example_list1, example_list2)):
-        puzzle.answer_a = ic(part1_solve(list1, list2))
+    if int(example.answer_a) == ic(part1_solve(example.input_data.splitlines())):
+        puzzle.answer_a = ic(part1_solve(puzzle.input_data.splitlines()))
 
     # Example answer b is not parsing right from  says 9 when it is supposed to be 31
     # if int(example.answer_b) == ic(part2_solve(example_list1, example_list2)):
-    if 31 == ic(part2_solve(example_list1, example_list2)):
-        puzzle.answer_b = ic(part2_solve(list1, list2))
+    # if 31 == ic(part2_solve(example_list1, example_list2)):
+    #     puzzle.answer_b = ic(part2_solve(list1, list2))
 
 
 if __name__ == '__main__':

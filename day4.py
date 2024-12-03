@@ -7,8 +7,7 @@ from parse import parse
 import re
 from more_itertools import peekable
 
-multiply_match_pattern = r"mul\(\d+,\d+\)"
-parse_pattern = "mul({:d},{:d})"
+multiply_match_pattern: str = r"mul\(\d+,\d+\)"
 
 
 def part1_solve(input_data: str) -> int:
@@ -19,24 +18,21 @@ def part1_solve(input_data: str) -> int:
 def instructions_total(instructions: list[str]) -> int:
     instructions_sum = []
     for instruction in instructions:
-        number1, number2 = parse(parse_pattern, instruction)
+        number1, number2 = parse("mul({:d},{:d})", instruction)
         instructions_sum.append(number1 * number2)
     return sum(instructions_sum)
 
 
 def part2_solve(input_data: str) -> int:
     line_sum = []
-    for segment in input_data.split("do()"):
+    for segment in input_data.split(r"do()"):
         end_markers = peekable(re.finditer(r"don't\(\)", segment))
         if end_markers:
-            end_marker = next(end_markers)
-            extract_segment = ic(segment[0:end_marker.start()])
-            instructions = re.findall(multiply_match_pattern, extract_segment)
-            line_sum.append(instructions_total(instructions))
+            extract_segment = ic(segment[:next(end_markers).start()])
         else:
-            extract_segment = ic(segment[0:len(segment)])
-            instructions = re.findall(multiply_match_pattern, extract_segment)
-            line_sum.append(instructions_total(instructions))
+            extract_segment = ic(segment[:len(segment)])
+        instructions = re.findall(multiply_match_pattern, extract_segment)
+        line_sum.append(instructions_total(instructions))
     return ic(sum(line_sum))
 
 

@@ -25,7 +25,7 @@ def instructions_total(instructions: list[str]) -> int:
 
 def part2_solve(input_data: str) -> int:
     line_sum = []
-    for segment in input_data.split("do()"):
+    for segment in input_data.split(r"do()"):
         end_markers = peekable(re.finditer(r"don't\(\)", segment))
         if end_markers:
             extract_segment = ic(segment[:next(end_markers).start()])

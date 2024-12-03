@@ -5,68 +5,39 @@ from aocd.models import Puzzle
 from icecream import ic
 from parse import parse
 import re
+from more_itertools import peekable
 
-def parse_line(input_line: str) -> list[int]:
-    return [int(x) for x in input_line.split(" ")]
-
-
-def get_pair_diffs(computed_pairs, is_decreasing) -> list[int]:
-    diffs = []
-    for pair in computed_pairs:
-        diffs.append(pair[0] - pair[1] if is_decreasing else pair[1] - pair[0])
-    return diffs
-
-
-def report_details(report_values: list[int]) -> dict:
-    is_decreasing = report_values[0] > report_values[-1]
-    pair_diffs = ic(get_pair_diffs(itertools.pairwise(report_values), is_decreasing))
-    return report_error_counts(pair_diffs)
-
-
-def report_error_counts(diffs: list[int]) -> list[int]:
-    errors = []
-    for index in range(len(diffs)):
-        current_diff = diffs[index]
-        if current_diff <= 0:
-            errors.append(index)
-            continue
-        if current_diff > 3:
-            errors.append(index)
-            continue
-        continue
-    return errors
+multiply_match_pattern = r"mul\(\d+,\d+\)"
+parse_pattern = "mul({:d},{:d})"
 
 
 def part1_solve(input_data: str) -> int:
-    line_sum = []
-    match_pattern = r"mul\(\d+,\d+\)"
-    instructions = re.findall(match_pattern, input_data)
+    instructions = re.findall(multiply_match_pattern, input_data)
+    return instructions_total(instructions)
+
+
+def instructions_total(instructions: list[str]) -> int:
+    instructions_sum = []
     for instruction in instructions:
-        number1, number2 = parse("mul({:d},{:d})", instruction)
-        line_sum.append(number1 * number2)
-    return sum(line_sum)
+        number1, number2 = parse(parse_pattern, instruction)
+        instructions_sum.append(number1 * number2)
+    return sum(instructions_sum)
 
 
-# def part2_solve(input_lines: list[str]) -> int:
-#     safe_reports = 0
-#     for line in input_lines:
-#         report_values = parse_line(line)
-#         current_errors = report_details(report_values)
-#         safe_reports += 1 if len(current_errors) == 0 else 0
-#         continue
-#
-#         pair_issue_index = current_errors.pop()
-#         report_values.pop(pair_issue_index)
-#         current_errors = report_details(report_values)
-#         safe_reports += 1 if len(current_errors) == 0 else 0
-#         continue
-#
-#         report_values = parse_line(line)
-#         report_values.pop(pair_issue_index + 1)
-#         current_errors = report_details(report_values)
-#         safe_reports += 1 if len(current_errors) == 0 else 0
-#
-#     return safe_reports
+def part2_solve(input_data: str) -> int:
+    line_sum = []
+    for segment in input_data.split("do()"):
+        end_markers = peekable(re.finditer(r"don't\(\)", segment))
+        if end_markers:
+            end_marker = next(end_markers)
+            extract_segment = ic(segment[0:end_marker.start()])
+            instructions = re.findall(multiply_match_pattern, extract_segment)
+            line_sum.append(instructions_total(instructions))
+        else:
+            extract_segment = ic(segment[0:len(segment)])
+            instructions = re.findall(multiply_match_pattern, extract_segment)
+            line_sum.append(instructions_total(instructions))
+    return ic(sum(line_sum))
 
 
 def main() -> None:
@@ -74,13 +45,14 @@ def main() -> None:
     example = puzzle.examples.pop()
 
     input_lines = puzzle.input_data
-    example_lines = example.input_data
+    example_line_part1 = example.input_data
+    example_line_part2 = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
 
-    if 161 == ic(part1_solve(example_lines)):
+    if 161 == ic(part1_solve(example_line_part1)):
         puzzle.answer_a = ic(part1_solve(input_lines))
 
-    # if int(example.answer_b) == ic(part2_solve(example_lines)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 48 == ic(part2_solve(example_line_part2)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

@@ -7,8 +7,7 @@ from parse import parse
 import re
 from more_itertools import peekable
 
-multiply_match_pattern = r"mul\(\d+,\d+\)"
-parse_pattern = "mul({:d},{:d})"
+multiply_match_pattern: str = r"mul\(\d+,\d+\)"
 
 
 def part1_solve(input_data: str) -> int:
@@ -19,7 +18,7 @@ def part1_solve(input_data: str) -> int:
 def instructions_total(instructions: list[str]) -> int:
     instructions_sum = []
     for instruction in instructions:
-        number1, number2 = parse(parse_pattern, instruction)
+        number1, number2 = parse("mul({:d},{:d})", instruction)
         instructions_sum.append(number1 * number2)
     return sum(instructions_sum)
 

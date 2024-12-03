@@ -29,14 +29,11 @@ def part2_solve(input_data: str) -> int:
     for segment in input_data.split("do()"):
         end_markers = peekable(re.finditer(r"don't\(\)", segment))
         if end_markers:
-            end_marker = next(end_markers)
-            extract_segment = ic(segment[0:end_marker.start()])
-            instructions = re.findall(multiply_match_pattern, extract_segment)
-            line_sum.append(instructions_total(instructions))
+            extract_segment = ic(segment[0:next(end_markers).start()])
         else:
             extract_segment = ic(segment[0:len(segment)])
-            instructions = re.findall(multiply_match_pattern, extract_segment)
-            line_sum.append(instructions_total(instructions))
+        instructions = re.findall(multiply_match_pattern, extract_segment)
+        line_sum.append(instructions_total(instructions))
     return ic(sum(line_sum))
 
 

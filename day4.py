@@ -38,16 +38,17 @@ def part1_solve(input_data: list[str]) -> int:
 def part2_solve(input_data: list[str]) -> int:
     match_pattern = "mas"
     total = 0
-    row_blocks = []
+    # row_blocks = []
     for column in range(len(input_data) - 2):
         for row in range(len(input_data[column]) - 2):
-            sub_matrix = [current_row[row:row + 3] for current_row in input_data[column:column + 3]]
+            row_data = [list(current_row[row:row + 3]) for current_row in input_data[column:column + 3]]
+            sub_matrix = np.array(row_data, dtype=str)
             diagonals = [
-                "".join([sub_matrix[0][0], sub_matrix[1][1], sub_matrix[2][2]]),
-                "".join([sub_matrix[2][0], sub_matrix[1][1], sub_matrix[0][2]])
+                "".join(np.diagonal(sub_matrix).tolist()),
+                "".join(np.diagonal(np.fliplr(sub_matrix)).tolist())
             ]
             if find_pattern(diagonals[0], match_pattern) > 0 and find_pattern(diagonals[1], match_pattern) > 0:
-                row_blocks.append(ic(sub_matrix))
+                # row_blocks.append(ic(sub_matrix))
                 total += 1
     return total
 

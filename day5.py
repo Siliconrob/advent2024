@@ -1,55 +1,21 @@
-import itertools
-from collections import Counter
-from typing import Tuple
+import numpy as np
 from aocd.models import Puzzle
 from icecream import ic
-from parse import parse
 import re
-from more_itertools import peekable
 
-
-def left_to_right_diagonals(input_data: list[str]) -> list[str]:
-    lines = []
-    size = len(input_data)
-    for col in range(size):
-        diagonal = []
-        x, y = 0, col
-        while x < size and y < size:
-            diagonal.append(input_data[x][y])
-            x += 1
-            y += 1
-        lines.append("".join(diagonal))
-    for row in range(1, size):
-        diagonal = []
-        x, y = row, 0
-        while x < size and y < size:
-            diagonal.append(input_data[x][y])
-            x += 1
-            y += 1
-        lines.append("".join(diagonal))
-    return lines
-
-
-def right_to_left_diagonals(input_data: list[str]) -> list[str]:
-    lines = []
-    size = len(input_data)
-    for col in range(size):
-        diagonal = []
-        x, y = 0, col
-        while x < size and y >= 0:
-            diagonal.append(input_data[x][y])
-            x += 1
-            y -= 1
-        lines.append("".join(diagonal))
-    for row in range(1, size):
-        diagonal = []
-        x, y = row, size - 1
-        while x < size and y >= 0:
-            diagonal.append(input_data[x][y])
-            x += 1
-            y -= 1
-        lines.append("".join(diagonal))
-    return lines
+def get_diagonals(input_data: list[str], min_length: 0) -> list[str]:
+    row_data = ic([list(line) for line in input_data])
+    matrix = ic(np.array(row_data, dtype=str))
+    columns = len(input_data[0])
+    diagonals = []
+    for index in range(columns * -1, columns):
+        diagonal_left_right = "".join(np.diagonal(matrix, offset=index).tolist())
+        if len(diagonal_left_right) > min_length:
+            diagonals.append(diagonal_left_right)
+        diagonal_right_left = "".join(np.diagonal(np.fliplr(matrix), offset=-index).tolist())
+        if len(diagonal_right_left) > min_length:
+            diagonals.append(diagonal_right_left)
+    return diagonals
 
 
 def find_pattern(input_line: str, search: str) -> int:
@@ -65,8 +31,7 @@ def part1_solve(input_data: list[str]) -> int:
     total = 0
     total += sum([find_pattern(line, match_pattern) for line in input_data])
     total += sum([find_pattern(line, match_pattern) for line in ["".join(column) for column in zip(*input_data)]])
-    total += sum([find_pattern(line, match_pattern) for line in left_to_right_diagonals(input_data)])
-    total += sum([find_pattern(line, match_pattern) for line in right_to_left_diagonals(input_data)])
+    total += sum([find_pattern(line, match_pattern) for line in get_diagonals(input_data, len(match_pattern) - 1)])
     return total
 
 

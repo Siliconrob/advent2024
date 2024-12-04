@@ -69,55 +69,26 @@ def part1_solve(input_data: list[str]) -> int:
     total += sum([find_pattern(line, match_pattern) for line in right_to_left_diagonals(input_data)])
     return total
 
-    #     horizontal_matches.append(len(re.findall(match_pattern, line, flags=re.IGNORECASE)))
-    #     horizontal_matches.append(len(re.findall(match_pattern, line[::-1], flags=re.IGNORECASE)))
-    # total += sum(horizontal_matches)
 
-    # for line in ["".join(column) for column in zip(*input_data)]:
-    #     vertical_matches.append(len(re.findall(match_pattern, line, flags=re.IGNORECASE)))
-    #     vertical_matches.append(len(re.findall(match_pattern, line[::-1], flags=re.IGNORECASE)))
-    # total += sum(vertical_matches)
-    #
-    # for line in left_to_right_diagonals(input_data):
-    #     left_to_right.append(len(re.findall(match_pattern, line, flags=re.IGNORECASE)))
-    #     left_to_right.append(len(re.findall(match_pattern, line[::-1], flags=re.IGNORECASE)))
-    # total += sum(left_to_right)
-    #
-    # for line in right_to_left_diagonals(input_data):
-    #     right_to_left.append(len(re.findall(match_pattern, line, flags=re.IGNORECASE)))
-    #     right_to_left.append(len(re.findall(match_pattern, line[::-1], flags=re.IGNORECASE)))
-    # total += sum(right_to_left)
-    #
-    # return total
-    # instructions = re.findall(multiply_match_pattern, input_data)
-    # return instructions_total(instructions)
-
-
-def instructions_total(instructions: list[str]) -> int:
-    instructions_sum = []
-    for instruction in instructions:
-        number1, number2 = parse("mul({:d},{:d})", instruction)
-        instructions_sum.append(number1 * number2)
-    return sum(instructions_sum)
-
-
-def part2_solve(input_data: str) -> int:
-    line_sum = []
-    for segment in input_data.split(r"do()"):
-        end_markers = peekable(re.finditer(r"don't\(\)", segment))
-        if end_markers:
-            extract_segment = ic(segment[:next(end_markers).start()])
-        else:
-            extract_segment = ic(segment[:len(segment)])
-        instructions = re.findall(multiply_match_pattern, extract_segment)
-        line_sum.append(instructions_total(instructions))
-    return ic(sum(line_sum))
+def part2_solve(input_data: list[str]) -> int:
+    match_pattern = "mas"
+    total = 0
+    row_blocks = []
+    for column in range(len(input_data) - 2):
+        for row in range(len(input_data[column]) - 2):
+            sub_matrix = [current_row[row:row + 3] for current_row in input_data[column:column + 3]]
+            diagonals = [
+                "".join([sub_matrix[0][0], sub_matrix[1][1], sub_matrix[2][2]]),
+                "".join([sub_matrix[2][0], sub_matrix[1][1], sub_matrix[0][2]])
+            ]
+            if find_pattern(diagonals[0], match_pattern) > 0 and find_pattern(diagonals[1], match_pattern) > 0:
+                row_blocks.append(ic(sub_matrix))
+                total += 1
+    return total
 
 
 def main() -> None:
     puzzle = Puzzle(year=2024, day=4)
-    example = puzzle.examples.pop()
-
     input_lines = puzzle.input_data.splitlines()
     example_line_part1 = """MMMSXXMASM
 MSAMXMSMSA
@@ -133,8 +104,8 @@ MXMXAXMASX""".splitlines()
     if 18 == ic(part1_solve(example_line_part1)):
         puzzle.answer_a = ic(part1_solve(input_lines))
 
-    # if 48 == ic(part2_solve(example_line_part2)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 9 == ic(part2_solve(example_line_part1)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

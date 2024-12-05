@@ -1,3 +1,4 @@
+import itertools
 from collections import deque
 
 import numpy as np
@@ -47,7 +48,7 @@ def is_ordering_valid(current_update: list[int], current_rules: dict) -> bool:
     current_values = deque(current_update)
     is_valid = len(current_values) > 0
     while len(current_values) > 1:
-        current_value = ic(current_values.popleft())
+        current_value = current_values.popleft()
         matching_rule = current_rules.get(current_value)
         if matching_rule is None:
             is_valid = False
@@ -73,21 +74,72 @@ def part1_solve(input_data: list[str]) -> int:
     return midpoints
 
 def part2_solve(input_data: list[str]) -> int:
-    match_pattern = "mas"
-    total = 0
-    # row_blocks = []
-    for column in range(len(input_data) - 2):
-        for row in range(len(input_data[column]) - 2):
-            row_data = [list(current_row[row:row + 3]) for current_row in input_data[column:column + 3]]
-            sub_matrix = np.array(row_data, dtype=str)
-            diagonals = [
-                "".join(np.diagonal(sub_matrix).tolist()),
-                "".join(np.diagonal(np.fliplr(sub_matrix)).tolist())
-            ]
-            if sum([find_pattern(diagonal, match_pattern) for diagonal in diagonals]) >= 2:
-                # row_blocks.append(ic(sub_matrix))
-                total += 1
-    return total
+    data_parts = input_data.split("\n\n")
+    updates = ic(data_parts.pop().splitlines())
+    rules_input = ic(data_parts.pop().splitlines())
+    current_rules = ic(parse_rules(rules_input))
+
+    invalid_updates = []
+    for current_update in updates:
+        update_ints = [int(x) for x in current_update.split(",")]
+        if not is_ordering_valid(update_ints, current_rules):
+            invalid_updates.append(update_ints)
+
+    reorderings = []
+    for invalid_update in sorted(invalid_updates, key=len):
+
+
+        all_options = itertools.permutations(invalid_update)
+        for current_option in all_options:
+            if is_ordering_valid(current_option, current_rules):
+                reorderings.append(current_option)
+                break
+
+        # current_ordering = []
+        #
+        # endings = []
+        #
+        # while len(invalid_update) > 0:
+        #     new_key = None
+        #     max_segment_length = 0
+        #     for key in invalid_update:
+        #         values = current_rules.get(key)
+        #         if values is None:
+        #             if len(invalid_update) == 1:
+        #                 new_key = key
+        #             continue
+        #         if len(values) > max_segment_length:
+        #             copy = current_ordering[:]
+        #             copy.append(key)
+        #             if is_ordering_valid(copy, current_rules):
+        #                 max_segment_length = len(values)
+        #                 new_key = key
+        #             else:
+        #                 endings.append(key)
+        #                 invalid_update.remove(key)
+        #     if new_key is not None:
+        #         current_ordering.append(new_key)
+        #         invalid_update.remove(new_key)
+
+        # if len(endings) > 0:
+        #     all_options = itertools.permutations(endings)
+        #     reordered = None
+        #     for current_option in all_options:
+        #         if is_ordering_valid(current_option, current_rules):
+        #             reordered = current_option
+        #             break
+        #     current_ordering = [*current_ordering, *reordered]
+        # reorderings.append(current_ordering)
+
+        # all_options = itertools.permutations(invalid_update)
+        # for current_option in all_options:
+        #     if is_ordering_valid(current_option, current_rules):
+        #         reorderings.append(current_option)
+        #         break
+        # ic(reorderings)
+    midpoints = ic(sum([valid_update[int(len(valid_update) / 2)] for valid_update in reorderings]))
+    return midpoints
+
 
 
 def main() -> None:
@@ -96,11 +148,12 @@ def main() -> None:
     example = puzzle.examples.pop()
     example_input = example.input_data
 
-    if int(example.answer_a) == ic(part1_solve(example_input)):
-        puzzle.answer_a = ic(part1_solve(input_lines))
+    # if int(example.answer_a) == ic(part1_solve(example_input)):
+    #     puzzle.answer_a = ic(part1_solve(input_lines))
+    # ic(part2_solve(example_input))
 
-    # if example.answer_b == ic(part2_solve(example_line_part1)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 123 == ic(part2_solve(example_input)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

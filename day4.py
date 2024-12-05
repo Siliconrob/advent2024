@@ -47,7 +47,7 @@ def part2_solve(input_data: list[str]) -> int:
                 "".join(np.diagonal(sub_matrix).tolist()),
                 "".join(np.diagonal(np.fliplr(sub_matrix)).tolist())
             ]
-            if find_pattern(diagonals[0], match_pattern) > 0 and find_pattern(diagonals[1], match_pattern) > 0:
+            if sum([find_pattern(diagonal, match_pattern) for diagonal in diagonals]) >= 2:
                 # row_blocks.append(ic(sub_matrix))
                 total += 1
     return total

@@ -73,6 +73,23 @@ def part1_solve(input_data: list[str]) -> int:
     midpoints = ic(sum([valid_update[int(len(valid_update) / 2)] for valid_update in valid_updates]))
     return midpoints
 
+
+def iterative_topological_sort(graph, current_start):
+    items = [current_start]
+    valid_path = []
+    working_path = set()
+    while items:
+        vertices = items[-1]
+        working_path = working_path.union({vertices})
+        children = [node for node in graph.get(vertices, []) if node not in working_path]
+        if not children:
+            valid_path = [vertices] + valid_path
+            items.pop()
+        else:
+            items.append(children[0])
+    return valid_path
+
+
 def part2_solve(input_data: list[str]) -> int:
     data_parts = input_data.split("\n\n")
     updates = ic(data_parts.pop().splitlines())
@@ -86,60 +103,21 @@ def part2_solve(input_data: list[str]) -> int:
             invalid_updates.append(update_ints)
 
     reorderings = []
-    for invalid_update in sorted(invalid_updates, key=len):
-
-
-        all_options = itertools.permutations(invalid_update)
-        for current_option in all_options:
-            if is_ordering_valid(current_option, current_rules):
-                reorderings.append(current_option)
+    for invalid_update in sorted(invalid_updates, key=len, reverse=True):
+        update_rules = {invalid: current_rules.get(invalid, []) for invalid in invalid_update}
+        possible_starts = sorted(update_rules, key=lambda key: len(update_rules[key]), reverse=True)
+        for possible_start in possible_starts:
+            path = iterative_topological_sort(update_rules, possible_start)
+            to_remove = set(path).difference(set(invalid_update))
+            # complete = []
+            complete = [node for node in path if node not in to_remove]
+            # :
+            #     complete.append(node)
+            if is_ordering_valid(complete, current_rules):
+                reorderings.append(complete)
                 break
-
-        # current_ordering = []
-        #
-        # endings = []
-        #
-        # while len(invalid_update) > 0:
-        #     new_key = None
-        #     max_segment_length = 0
-        #     for key in invalid_update:
-        #         values = current_rules.get(key)
-        #         if values is None:
-        #             if len(invalid_update) == 1:
-        #                 new_key = key
-        #             continue
-        #         if len(values) > max_segment_length:
-        #             copy = current_ordering[:]
-        #             copy.append(key)
-        #             if is_ordering_valid(copy, current_rules):
-        #                 max_segment_length = len(values)
-        #                 new_key = key
-        #             else:
-        #                 endings.append(key)
-        #                 invalid_update.remove(key)
-        #     if new_key is not None:
-        #         current_ordering.append(new_key)
-        #         invalid_update.remove(new_key)
-
-        # if len(endings) > 0:
-        #     all_options = itertools.permutations(endings)
-        #     reordered = None
-        #     for current_option in all_options:
-        #         if is_ordering_valid(current_option, current_rules):
-        #             reordered = current_option
-        #             break
-        #     current_ordering = [*current_ordering, *reordered]
-        # reorderings.append(current_ordering)
-
-        # all_options = itertools.permutations(invalid_update)
-        # for current_option in all_options:
-        #     if is_ordering_valid(current_option, current_rules):
-        #         reorderings.append(current_option)
-        #         break
-        # ic(reorderings)
     midpoints = ic(sum([valid_update[int(len(valid_update) / 2)] for valid_update in reorderings]))
     return midpoints
-
 
 
 def main() -> None:

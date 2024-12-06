@@ -1,6 +1,4 @@
-import itertools
-from collections import deque
-
+from collections import deque, defaultdict
 import numpy as np
 from aocd.models import Puzzle
 from icecream import ic
@@ -73,21 +71,37 @@ def part1_solve(input_data: list[str]) -> int:
     midpoints = ic(sum([valid_update[int(len(valid_update) / 2)] for valid_update in valid_updates]))
     return midpoints
 
+# Read this thoroughly
+# https://llego.dev/posts/implementing-topological-sort-python/
+def topological_sort_kahn(graph):
+    vertices = defaultdict(int)  # Track indegrees
+    queue = []  # Initialize queue
+    # Calculate indegrees
+    for node in graph:
+        for neighbour in graph[node]:
+            vertices[neighbour] += 1
+    # Add nodes with 0 indegree to queue
+    for node in graph:
+        if vertices[node] == 0:
+            queue.append(node)
+    topological_order = []
+    # Process until queue is empty
+    while queue:
+        # Remove node from queue and add to topological order
+        node = queue.pop(0)
+        # check for end point nodes
+        nodes = graph.get(node, [])
+        if len(nodes) == 0:
+            continue
+        topological_order.append(node)
+        # Reduce indegree for its neighbors
+        for neighbour in nodes:
+            vertices[neighbour] -= 1
+            # Add new 0 indegree nodes to queue
+            if vertices[neighbour] == 0:
+                queue.append(neighbour)
 
-def iterative_topological_sort(graph, current_start):
-    items = [current_start]
-    valid_path = []
-    working_path = set()
-    while items:
-        vertices = items[-1]
-        working_path = working_path.union({vertices})
-        children = [node for node in graph.get(vertices, []) if node not in working_path]
-        if not children:
-            valid_path = [vertices] + valid_path
-            items.pop()
-        else:
-            items.append(children[0])
-    return valid_path
+    return topological_order
 
 
 def part2_solve(input_data: list[str]) -> int:
@@ -105,17 +119,11 @@ def part2_solve(input_data: list[str]) -> int:
     reorderings = []
     for invalid_update in sorted(invalid_updates, key=len, reverse=True):
         update_rules = {invalid: current_rules.get(invalid, []) for invalid in invalid_update}
-        possible_starts = sorted(update_rules, key=lambda key: len(update_rules[key]), reverse=True)
-        for possible_start in possible_starts:
-            path = iterative_topological_sort(update_rules, possible_start)
-            to_remove = set(path).difference(set(invalid_update))
-            # complete = []
-            complete = [node for node in path if node not in to_remove]
-            # :
-            #     complete.append(node)
-            if is_ordering_valid(complete, current_rules):
-                reorderings.append(complete)
-                break
+        path = topological_sort_kahn(update_rules)
+        to_remove = set(path).difference(set(invalid_update))
+        complete = [node for node in path if node not in to_remove]
+        if is_ordering_valid(complete, current_rules):
+            reorderings.append(complete)
     midpoints = ic(sum([valid_update[int(len(valid_update) / 2)] for valid_update in reorderings]))
     return midpoints
 
@@ -126,9 +134,8 @@ def main() -> None:
     example = puzzle.examples.pop()
     example_input = example.input_data
 
-    # if int(example.answer_a) == ic(part1_solve(example_input)):
-    #     puzzle.answer_a = ic(part1_solve(input_lines))
-    # ic(part2_solve(example_input))
+    if int(example.answer_a) == ic(part1_solve(example_input)):
+        puzzle.answer_a = ic(part1_solve(input_lines))
 
     if 123 == ic(part2_solve(example_input)):
         puzzle.answer_b = ic(part2_solve(input_lines))

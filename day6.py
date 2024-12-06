@@ -1,40 +1,8 @@
-from collections import deque, defaultdict
 from dataclasses import dataclass, field
 from itertools import cycle
-
 import numpy as np
 from aocd.models import Puzzle
 from icecream import ic
-import re
-from parse import parse
-
-
-# def parse_rules(rules_input: list[str]) -> dict:
-#     rules = {}
-#     for rule in rules_input:
-#         key, value = parse("{:d}|{:d}", rule)
-#         current_rule = rules.get(key)
-#         if current_rule is not None:
-#             current_rule.append(value)
-#         else:
-#             current_rule = [value]
-#         rules[key] = current_rule
-#     return rules
-#
-#
-# def is_ordering_valid(current_update: list[int], current_rules: dict) -> bool:
-#     current_values = deque(current_update)
-#     is_valid = len(current_values) > 0
-#     while len(current_values) > 1:
-#         current_value = current_values.popleft()
-#         matching_rule = current_rules.get(current_value)
-#         if matching_rule is None:
-#             is_valid = False
-#             break
-#         if len(current_values) != len(set(matching_rule) & set(current_values)):
-#             is_valid = False
-#             break
-#     return is_valid
 
 
 @dataclass
@@ -72,7 +40,6 @@ def next_position(current_guard: Guard) -> Position:
 
 def part1_solve(input_data: list[str]) -> int:
     blocker = "#"
-
     guard = Guard()
     parsed = []
     for row_index in range(len(input_data)):
@@ -94,33 +61,37 @@ def part1_solve(input_data: list[str]) -> int:
         if matrix[possible_pos.y][possible_pos.x] == blocker:
             guard.direction = next(turn)
             continue
-        guard.position.x = possible_pos.x
-        guard.position.y = possible_pos.y
+        guard.position.x, guard.position.y = possible_pos.x, possible_pos.y
         current_pos = possible_pos
     return ic(sum([1 for iy, ix in np.ndindex(matrix.shape) if matrix[iy, ix].isnumeric() and int(matrix[iy, ix]) > 0]))
 
+
 def part2_solve(input_data: list[str]) -> int:
-    data_parts = input_data.split("\n\n")
-    updates = ic(data_parts.pop().splitlines())
-    rules_input = ic(data_parts.pop().splitlines())
-    current_rules = ic(parse_rules(rules_input))
-
-    invalid_updates = []
-    for current_update in updates:
-        update_ints = [int(x) for x in current_update.split(",")]
-        if not is_ordering_valid(update_ints, current_rules):
-            invalid_updates.append(update_ints)
-
-    reorderings = []
-    for invalid_update in sorted(invalid_updates, key=len, reverse=True):
-        update_rules = {invalid: current_rules.get(invalid, []) for invalid in invalid_update}
-        path = topological_sort_kahn(update_rules)
-        to_remove = set(path).difference(set(invalid_update))
-        complete = [node for node in path if node not in to_remove]
-        if is_ordering_valid(complete, current_rules):
-            reorderings.append(complete)
-    midpoints = ic(sum([valid_update[int(len(valid_update) / 2)] for valid_update in reorderings]))
-    return midpoints
+    blocker = "#"
+    guard = Guard()
+    parsed = []
+    for row_index in range(len(input_data)):
+        row = list(input_data[row_index].replace(".", "0"))
+        if guard.direction in row:
+            guard.position.x = row.index(guard.direction)
+            guard.position.y = row_index
+        parsed.append(row)
+    matrix = ic(np.array(parsed, dtype=str))
+    current_pos = guard.position
+    turn = cycle('^>v<')
+    while not is_end(current_pos, matrix.shape):
+        possible_pos = next_position(guard)
+        current_square = matrix[guard.position.y][guard.position.x]
+        current_square = int(current_square) + 1 if current_square.isnumeric() else 1
+        matrix[guard.position.y][guard.position.x] = current_square
+        if is_end(possible_pos, matrix.shape):
+            break
+        if matrix[possible_pos.y][possible_pos.x] == blocker:
+            guard.direction = next(turn)
+            continue
+        guard.position.x, guard.position.y = possible_pos.x, possible_pos.y
+        current_pos = possible_pos
+    return ic(sum([1 for iy, ix in np.ndindex(matrix.shape) if matrix[iy, ix].isnumeric() and int(matrix[iy, ix]) > 0]))
 
 
 def main() -> None:
@@ -129,11 +100,11 @@ def main() -> None:
     example = puzzle.examples.pop()
     example_input = example.input_data.splitlines()
 
-    if int(example.answer_a) == ic(part1_solve(example_input)):
-        puzzle.answer_a = ic(part1_solve(input_lines))
+    # if int(example.answer_a) == ic(part1_solve(example_input)):
+    #     puzzle.answer_a = ic(part1_solve(input_lines))
 
-    # if 123 == ic(part2_solve(example_input)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 6 == ic(part2_solve(example_input)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

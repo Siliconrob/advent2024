@@ -1,4 +1,7 @@
 from collections import deque, defaultdict
+from dataclasses import dataclass, field
+from itertools import cycle
+
 import numpy as np
 from aocd.models import Puzzle
 from icecream import ic
@@ -6,80 +9,95 @@ import re
 from parse import parse
 
 
-def parse_rules(rules_input: list[str]) -> dict:
-    rules = {}
-    for rule in rules_input:
-        key, value = parse("{:d}|{:d}", rule)
-        current_rule = rules.get(key)
-        if current_rule is not None:
-            current_rule.append(value)
-        else:
-            current_rule = [value]
-        rules[key] = current_rule
-    return rules
+# def parse_rules(rules_input: list[str]) -> dict:
+#     rules = {}
+#     for rule in rules_input:
+#         key, value = parse("{:d}|{:d}", rule)
+#         current_rule = rules.get(key)
+#         if current_rule is not None:
+#             current_rule.append(value)
+#         else:
+#             current_rule = [value]
+#         rules[key] = current_rule
+#     return rules
+#
+#
+# def is_ordering_valid(current_update: list[int], current_rules: dict) -> bool:
+#     current_values = deque(current_update)
+#     is_valid = len(current_values) > 0
+#     while len(current_values) > 1:
+#         current_value = current_values.popleft()
+#         matching_rule = current_rules.get(current_value)
+#         if matching_rule is None:
+#             is_valid = False
+#             break
+#         if len(current_values) != len(set(matching_rule) & set(current_values)):
+#             is_valid = False
+#             break
+#     return is_valid
 
 
-def is_ordering_valid(current_update: list[int], current_rules: dict) -> bool:
-    current_values = deque(current_update)
-    is_valid = len(current_values) > 0
-    while len(current_values) > 1:
-        current_value = current_values.popleft()
-        matching_rule = current_rules.get(current_value)
-        if matching_rule is None:
-            is_valid = False
-            break
-        if len(current_values) != len(set(matching_rule) & set(current_values)):
-            is_valid = False
-            break
-    return is_valid
+@dataclass
+class Position:
+    x: int = -1
+    y: int = -1
+
+
+@dataclass
+class Guard:
+    direction: str = '^'
+    position: Position = field(default_factory=Position)
+
+
+def is_end(current_position: Position, bounds) -> bool:
+    max_x, max_y = bounds
+    if current_position.x < 0 or current_position.x > max_x - 1:
+        return True
+    if current_position.y < 0 or current_position.y > max_y - 1:
+        return True
+    return False
+
+
+def next_position(current_guard: Guard) -> Position:
+    x, y = current_guard.position.x, current_guard.position.y
+    if current_guard.direction == '^':
+        return Position(x, y - 1)
+    if current_guard.direction == '>':
+        return Position(x + 1, y)
+    if current_guard.direction == '<':
+        return Position(x - 1, y)
+    if current_guard.direction == 'v':
+        return Position(x, y + 1)
 
 
 def part1_solve(input_data: list[str]) -> int:
-    data_parts = input_data.split("\n\n")
-    updates = ic(data_parts.pop().splitlines())
-    rules_input = ic(data_parts.pop().splitlines())
-    current_rules = ic(parse_rules(rules_input))
+    blocker = "#"
 
-    valid_updates = []
-    for current_update in updates:
-        update_ints = [int(x) for x in current_update.split(",")]
-        if is_ordering_valid(update_ints, current_rules):
-            valid_updates.append(update_ints)
-    midpoints = ic(sum([valid_update[int(len(valid_update) / 2)] for valid_update in valid_updates]))
-    return midpoints
-
-# Read this thoroughly
-# https://llego.dev/posts/implementing-topological-sort-python/
-def topological_sort_kahn(graph):
-    vertices = defaultdict(int)  # Track indegrees
-    queue = []  # Initialize queue
-    # Calculate indegrees
-    for node in graph:
-        for neighbour in graph[node]:
-            vertices[neighbour] += 1
-    # Add nodes with 0 indegree to queue
-    for node in graph:
-        if vertices[node] == 0:
-            queue.append(node)
-    topological_order = []
-    # Process until queue is empty
-    while queue:
-        # Remove node from queue and add to topological order
-        node = queue.pop(0)
-        # check for end point nodes
-        nodes = graph.get(node, [])
-        if len(nodes) == 0:
+    guard = Guard()
+    parsed = []
+    for row_index in range(len(input_data)):
+        row = list(input_data[row_index].replace(".", "0"))
+        if guard.direction in row:
+            guard.position.x = row.index(guard.direction)
+            guard.position.y = row_index
+        parsed.append(row)
+    matrix = ic(np.array(parsed, dtype=str))
+    current_pos = guard.position
+    turn = cycle('^>v<')
+    while not is_end(current_pos, matrix.shape):
+        possible_pos = next_position(guard)
+        current_square = matrix[guard.position.y][guard.position.x]
+        current_square = int(current_square) + 1 if current_square.isnumeric() else 1
+        matrix[guard.position.y][guard.position.x] = current_square
+        if is_end(possible_pos, matrix.shape):
+            break
+        if matrix[possible_pos.y][possible_pos.x] == blocker:
+            guard.direction = next(turn)
             continue
-        topological_order.append(node)
-        # Reduce indegree for its neighbors
-        for neighbour in nodes:
-            vertices[neighbour] -= 1
-            # Add new 0 indegree nodes to queue
-            if vertices[neighbour] == 0:
-                queue.append(neighbour)
-
-    return topological_order
-
+        guard.position.x = possible_pos.x
+        guard.position.y = possible_pos.y
+        current_pos = possible_pos
+    return ic(sum([1 for iy, ix in np.ndindex(matrix.shape) if matrix[iy, ix].isnumeric() and int(matrix[iy, ix]) > 0]))
 
 def part2_solve(input_data: list[str]) -> int:
     data_parts = input_data.split("\n\n")
@@ -107,15 +125,15 @@ def part2_solve(input_data: list[str]) -> int:
 
 def main() -> None:
     puzzle = Puzzle(year=2024, day=6)
-    input_lines = puzzle.input_data
+    input_lines = puzzle.input_data.splitlines()
     example = puzzle.examples.pop()
-    example_input = example.input_data
+    example_input = example.input_data.splitlines()
 
     if int(example.answer_a) == ic(part1_solve(example_input)):
         puzzle.answer_a = ic(part1_solve(input_lines))
 
-    if 123 == ic(part2_solve(example_input)):
-        puzzle.answer_b = ic(part2_solve(input_lines))
+    # if 123 == ic(part2_solve(example_input)):
+    #     puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

@@ -6,29 +6,6 @@ import re
 from parse import parse
 
 
-def get_diagonals(input_data: list[str], min_length: 0) -> list[str]:
-    row_data = ic([list(line) for line in input_data])
-    matrix = ic(np.array(row_data, dtype=str))
-    columns = len(input_data[0])
-    diagonals = []
-    for index in range(columns * -1, columns):
-        diagonal_left_right = "".join(np.diagonal(matrix, offset=index).tolist())
-        if len(diagonal_left_right) > min_length:
-            diagonals.append(diagonal_left_right)
-        diagonal_right_left = "".join(np.diagonal(np.fliplr(matrix), offset=-index).tolist())
-        if len(diagonal_right_left) > min_length:
-            diagonals.append(diagonal_right_left)
-    return diagonals
-
-
-def find_pattern(input_line: str, search: str) -> int:
-    result = sum([
-        len(re.findall(search, input_line, flags=re.IGNORECASE)),
-        len(re.findall(search, input_line[::-1], flags=re.IGNORECASE))
-    ])
-    return result
-
-
 def parse_rules(rules_input: list[str]) -> dict:
     rules = {}
     for rule in rules_input:

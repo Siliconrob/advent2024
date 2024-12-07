@@ -19,20 +19,15 @@ def parse_line(input_line: str) -> Equation:
     return Equation(int(parts[0]), [int(z) for z in parts[1].strip().split(" ")])
 
 
-def calculate(possible_solution: deque) -> int:
+def calculate(possible_solution: deque, calcs) -> int:
     current_result = 0
     while possible_solution:
         item = possible_solution.popleft()
         if current_result == 0:
             current_result = item
-            continue
-        next_item = possible_solution.popleft()
-        if item == "*":
-            current_result = current_result * next_item
-        elif item == "+":
-            current_result = current_result + next_item
         else:
-            current_result = join_all_values([current_result, next_item])
+            next_item = possible_solution.popleft()
+            current_result = calcs.get(item)(current_result, next_item)
     return current_result
 
 
@@ -47,7 +42,7 @@ def solve(input_equation: Equation, terminators: list[Callable], calcs: dict) ->
     for solution in run_combinations(current_inputs, input_equation, calcs):
         if len(solution) == 0:
             return False
-        if input_equation.result == calculate(copy.deepcopy(solution)):
+        if input_equation.result == calculate(copy.deepcopy(solution), calcs):
             return True
     return False
 
@@ -58,7 +53,7 @@ def run_combinations(current_inputs, input_equation, calcs):
         value = current_inputs.popleft()
         next_possibles = []
         for possible in current_solutions:
-            partial_result = calculate(copy.deepcopy(possible))
+            partial_result = calculate(copy.deepcopy(possible), calcs)
             for (operator, fn) in calcs.items():
                 if fn(partial_result, value) <= input_equation.result:
                     next_possibles.append(deque(itertools.chain(possible, [operator], [value])))

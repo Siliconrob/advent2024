@@ -71,20 +71,20 @@ def solve(input_equation: Equation) -> bool:
     return False
 
 
-def part1_solve(input_data: list[str]) -> int:
+def general_solve(input_data: list[str]) -> int
     valid_equations = []
     for current_equation in [parse_line(line) for line in input_data]:
         if solve(current_equation):
             valid_equations.append(current_equation)
     return sum([z.result for z in valid_equations])
+
+
+def part1_solve(input_data: list[str]) -> int:
+    return general_solve(input_data)
 
 
 def part2_solve(input_data: list[str]) -> int:
-    valid_equations = []
-    for current_equation in [parse_line(line) for line in input_data]:
-        if solve(current_equation):
-            valid_equations.append(current_equation)
-    return sum([z.result for z in valid_equations])
+    return general_solve(input_data)
 
 
 def main() -> None:

@@ -71,29 +71,11 @@ def general_solve(input_data: list[str], terminators: list[Callable], calcs: dic
     return sum([z.result for z in valid_equations])
 
 
-def part1_solve(input_data: list[str]) -> int:
-    terminators = [
-        lambda inputs: reduce(lambda x, y: x * y, inputs),
-        lambda inputs: reduce(lambda x, y: x + y, inputs)
-    ]
-    calcs = {
-        "*": lambda x, y: x * y,
-        "+": lambda x, y: x + y
-    }
+def part1_solve(input_data: list[str], terminators: list[Callable], calcs: dict) -> int:
     return general_solve(input_data, terminators, calcs)
 
 
-def part2_solve(input_data: list[str]) -> int:
-    terminators = [
-        lambda inputs: reduce(lambda x, y: x * y, inputs),
-        lambda inputs: reduce(lambda x, y: x + y, inputs),
-        lambda inputs: join_all_values(inputs)
-    ]
-    calcs = {
-        "*": lambda x, y: x * y,
-        "+": lambda x, y: x + y,
-        "||": lambda x, y: join_all_values([x, y]),
-    }
+def part2_solve(input_data: list[str], terminators: list[Callable], calcs: dict) -> int:
     return general_solve(input_data, terminators, calcs)
 
 
@@ -103,11 +85,22 @@ def main() -> None:
     example = puzzle.examples.pop()
     example_input = example.input_data.splitlines()
 
-    if int(example.answer_a) == ic(part1_solve(example_input)):
-        puzzle.answer_a = ic(part1_solve(input_lines))
+    terminators = [
+        lambda inputs: reduce(lambda x, y: x * y, inputs),
+        lambda inputs: reduce(lambda x, y: x + y, inputs)
+    ]
+    calcs = {
+        "*": lambda x, y: x * y,
+        "+": lambda x, y: x + y
+    }
+    if int(example.answer_a) == ic(part1_solve(example_input, terminators, calcs)):
+        puzzle.answer_a = ic(part1_solve(input_lines, terminators, calcs))
 
-    if 11387 == ic(part2_solve(example_input)):
-        puzzle.answer_b = ic(part2_solve(input_lines))
+    terminators.append(lambda inputs: join_all_values(inputs))
+    calcs["||"] = lambda x, y: join_all_values([x, y])
+
+    if 11387 == ic(part2_solve(example_input, terminators, calcs)):
+        puzzle.answer_b = ic(part2_solve(input_lines, terminators, calcs))
 
 
 if __name__ == '__main__':

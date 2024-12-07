@@ -1,6 +1,7 @@
 import copy
 import itertools
 from collections import deque
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import reduce
 from aocd.models import Puzzle
@@ -39,52 +40,66 @@ def join_all_values(input_values: list[int]) -> int:
     return int("".join([str(z) for z in input_values]))
 
 
-def solve(input_equation: Equation) -> bool:
-    if input_equation.result == reduce(lambda x, y: x * y, input_equation.inputs):
-        return True
-    if input_equation.result == reduce(lambda x, y: x + y, input_equation.inputs):
-        return True
-    if input_equation.result == join_all_values(input_equation.inputs):
+def solve(input_equation: Equation, terminators: list[Callable], calcs: dict) -> bool:
+    if sum([1 if input_equation.result == terminator(input_equation.inputs) else 0 for terminator in terminators]) > 0:
         return True
     current_inputs = deque(input_equation.inputs)
-    solutions = [deque([current_inputs.popleft()])]
-    while len(current_inputs) > 0 and len(solutions) > 0:
-        value = current_inputs.popleft()
-        next_possibles = []
-        for possible in solutions:
-            partial_result = calculate(copy.deepcopy(possible))
-            if partial_result * value <= input_equation.result:
-                mult_partial = deque(itertools.chain(possible, ["*"], [value]))
-                next_possibles.append(mult_partial)
-            if partial_result + value <= input_equation.result:
-                add_partial = deque(itertools.chain(possible, ["+"], [value]))
-                next_possibles.append(add_partial)
-            if join_all_values([partial_result, value]) <= input_equation.result:
-                join_partial = deque(itertools.chain(possible, ["||"], [value]))
-                next_possibles.append(join_partial)
-        solutions = next_possibles
-        if len(solutions) == 0:
+    for solution in run_combinations(current_inputs, input_equation, calcs):
+        if len(solution) == 0:
             return False
-    for solution in solutions:
         if input_equation.result == calculate(copy.deepcopy(solution)):
             return True
     return False
 
 
-def part1_solve(input_data: list[str]) -> int:
+def run_combinations(current_inputs, input_equation, calcs):
+    current_solutions = [deque([current_inputs.popleft()])]
+    while len(current_inputs) > 0 and len(current_solutions) > 0:
+        value = current_inputs.popleft()
+        next_possibles = []
+        for possible in current_solutions:
+            partial_result = calculate(copy.deepcopy(possible))
+            for (operator, fn) in calcs.items():
+                if fn(partial_result, value) <= input_equation.result:
+                    next_possibles.append(deque(itertools.chain(possible, [operator], [value])))
+        current_solutions = next_possibles
+        if len(current_solutions) == 0:
+            break
+    return current_solutions
+
+
+def general_solve(input_data: list[str], terminators: list[Callable], calcs: dict) -> int:
     valid_equations = []
     for current_equation in [parse_line(line) for line in input_data]:
-        if solve(current_equation):
+        if solve(current_equation, terminators, calcs):
             valid_equations.append(current_equation)
     return sum([z.result for z in valid_equations])
+
+
+def part1_solve(input_data: list[str]) -> int:
+    terminators = [
+        lambda inputs: reduce(lambda x, y: x * y, inputs),
+        lambda inputs: reduce(lambda x, y: x + y, inputs)
+    ]
+    calcs = {
+        "*": lambda x, y: x * y,
+        "+": lambda x, y: x + y
+    }
+    return general_solve(input_data, terminators, calcs)
 
 
 def part2_solve(input_data: list[str]) -> int:
-    valid_equations = []
-    for current_equation in [parse_line(line) for line in input_data]:
-        if solve(current_equation):
-            valid_equations.append(current_equation)
-    return sum([z.result for z in valid_equations])
+    terminators = [
+        lambda inputs: reduce(lambda x, y: x * y, inputs),
+        lambda inputs: reduce(lambda x, y: x + y, inputs),
+        lambda inputs: join_all_values(inputs)
+    ]
+    calcs = {
+        "*": lambda x, y: x * y,
+        "+": lambda x, y: x + y,
+        "||": lambda x, y: join_all_values([x, y]),
+    }
+    return general_solve(input_data, terminators, calcs)
 
 
 def main() -> None:

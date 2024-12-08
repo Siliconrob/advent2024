@@ -19,32 +19,43 @@ class Equation:
     inputs: list[int] = field(default_factory=list)
 
 
-def part1_solve(input_data: list[str]) -> int:
+def general_solve(input_data: list[str], part_b: bool = False) -> int:
     max_x, max_y = len(input_data), len(input_data[0])
     antenna_groups = find_antennas(input_data)
     anti_nodes = []
     for (antenna_type, antenna_group) in antenna_groups.items():
-        # f = ic(list())
-        # k = ic(list(itertools.pairwise(antenna_group)))
         for antenna_pair in itertools.combinations(antenna_group, 2):
             location1, location2 = antenna_pair[0], antenna_pair[1]
+
             y_diff = location1[0] - location2[0]
             x_diff = location1[1] - location2[1]
-            # left right rising diagonal
-            # if location1[1][0] > location2[1][0] and location1[1][1] < location2[1][1]:
-            poss_points = set([
-                (location1[0] - y_diff, location1[1] - x_diff),
-                (location1[0] + y_diff, location1[1] + x_diff),
-                (location2[0] - y_diff, location2[1] - x_diff),
-                (location2[0] + y_diff, location2[1] + x_diff)
-            ])
-            current_points = [location1, location2]
-            poss_points = poss_points - set(current_points)
-            for point in poss_points:
-                point_y, point_x = point[0], point[1]
-                if -1 < point_y < max_y and -1 < point_x < max_x:
-                    anti_nodes.append(point)
-    # antennas = ic([item for sublist in antenna_groups.values() for item in sublist])
+            new_x_diff = 0
+            new_y_diff = 0
+            while True:
+                new_x_diff += y_diff
+                new_y_diff += x_diff
+                poss_points = set([
+                    (location1[0] - new_y_diff, location1[1] - new_x_diff),
+                    (location1[0] + new_y_diff, location1[1] + new_x_diff),
+                    (location2[0] - new_y_diff, location2[1] - new_x_diff),
+                    (location2[0] + new_y_diff, location2[1] + new_x_diff)
+                ])
+                current_points = [location1, location2]
+                poss_points = poss_points - set(current_points)
+
+                invalid_points = 0
+                for point in poss_points:
+                    point_y, point_x = point[0], point[1]
+                    if -1 < point_y < max_y and -1 < point_x < max_x:
+                        anti_nodes.append(point)
+                    else:
+                        invalid_points += 1
+                if invalid_points == len(poss_points):
+                    break
+                if part_b is False:
+                    break
+    uniques = set(anti_nodes)
+    print_map(input_data, uniques)
     return len(set(anti_nodes))
 
 
@@ -78,9 +89,12 @@ def find_antennas(input_data):
     return current_node_sets
 
 
-def part2_solve(input_data: list[str], terminators: list[Callable], calcs: dict) -> int:
-    # return general_solve(input_data, terminators, calcs)
-    pass
+def part1_solve(input_data: list[str]) -> int:
+    return general_solve(input_data, False)
+
+
+def part2_solve(input_data: list[str]) -> int:
+    return general_solve(input_data, True)
 
 
 def main() -> None:
@@ -92,8 +106,10 @@ def main() -> None:
     # if int(example.answer_a) == ic(part1_solve(example_input)):
     #     puzzle.answer_a = ic(part1_solve(input_lines))
 
-    if 11387 == ic(part2_solve(example_input, terminators, calcs)):
-        puzzle.answer_b = ic(part2_solve(input_lines, terminators, calcs))
+    ic(part2_solve(example_input))
+
+    # if 34 == ic(part2_solve(example_input)):
+    #     puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

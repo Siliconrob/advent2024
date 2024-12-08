@@ -6,6 +6,11 @@ from dataclasses import dataclass, field
 from functools import reduce
 from aocd.models import Puzzle
 from icecream import ic
+from sympy import symbols, Function, Eq, Piecewise
+from sympy import solve
+
+f = Function('f')
+from sympy.abc import x, y, z, a, b, c, d, e
 
 
 @dataclass
@@ -14,69 +19,68 @@ class Equation:
     inputs: list[int] = field(default_factory=list)
 
 
-def parse_line(input_line: str) -> Equation:
-    parts = input_line.split(":")
-    return Equation(int(parts[0]), [int(z) for z in parts[1].strip().split(" ")])
+def part1_solve(input_data: list[str]) -> int:
+    max_x, max_y = len(input_data), len(input_data[0])
+    antenna_groups = find_antennas(input_data)
+    anti_nodes = []
+    for (antenna_type, antenna_group) in antenna_groups.items():
+        # f = ic(list())
+        # k = ic(list(itertools.pairwise(antenna_group)))
+        for antenna_pair in itertools.combinations(antenna_group, 2):
+            location1, location2 = antenna_pair[0], antenna_pair[1]
+            y_diff = location1[0] - location2[0]
+            x_diff = location1[1] - location2[1]
+            # left right rising diagonal
+            # if location1[1][0] > location2[1][0] and location1[1][1] < location2[1][1]:
+            poss_points = set([
+                (location1[0] - y_diff, location1[1] - x_diff),
+                (location1[0] + y_diff, location1[1] + x_diff),
+                (location2[0] - y_diff, location2[1] - x_diff),
+                (location2[0] + y_diff, location2[1] + x_diff)
+            ])
+            current_points = [location1, location2]
+            poss_points = poss_points - set(current_points)
+            for point in poss_points:
+                point_y, point_x = point[0], point[1]
+                if -1 < point_y < max_y and -1 < point_x < max_x:
+                    anti_nodes.append(point)
+    # antennas = ic([item for sublist in antenna_groups.values() for item in sublist])
+    return len(set(anti_nodes))
 
 
-def calculate(possible_solution: deque, calcs) -> int:
-    current_result = 0
-    while possible_solution:
-        item = possible_solution.popleft()
-        if current_result == 0:
-            current_result = item
-        else:
-            next_item = possible_solution.popleft()
-            current_result = calcs.get(item)(current_result, next_item)
-    return current_result
+def print_map(input_data, uniques):
+    lines = []
+
+    for y in range(len(input_data)):
+        line = []
+        for x in range(len(input_data[y])):
+            point_value = input_data[y][x]
+            if (y, x) in uniques:
+                point_value = "#"
+            line.append(point_value)
+        lines.append("".join(line))
+    ic(lines)
 
 
-def join_all_values(input_values: list[int]) -> int:
-    return int("".join([str(z) for z in input_values]))
-
-
-def solve(input_equation: Equation, terminators: list[Callable], calcs: dict) -> bool:
-    if sum([1 if input_equation.result == terminator(input_equation.inputs) else 0 for terminator in terminators]) > 0:
-        return True
-    current_inputs = deque(input_equation.inputs)
-    for solution in run_combinations(current_inputs, input_equation, calcs):
-        if len(solution) == 0:
-            return False
-        if input_equation.result == calculate(copy.deepcopy(solution), calcs):
-            return True
-    return False
-
-
-def run_combinations(current_inputs, input_equation, calcs):
-    current_solutions = [deque([current_inputs.popleft()])]
-    while len(current_inputs) > 0 and len(current_solutions) > 0:
-        value = current_inputs.popleft()
-        next_possibles = []
-        for possible in current_solutions:
-            partial_result = calculate(copy.deepcopy(possible), calcs)
-            for (operator, fn) in calcs.items():
-                if fn(partial_result, value) <= input_equation.result:
-                    next_possibles.append(deque(itertools.chain(possible, [operator], [value])))
-        current_solutions = next_possibles
-        if len(current_solutions) == 0:
-            break
-    return current_solutions
-
-
-def general_solve(input_data: list[str], terminators: list[Callable], calcs: dict) -> int:
-    valid_equations = []
-    for current_equation in [parse_line(line) for line in input_data]:
-        if solve(current_equation, terminators, calcs):
-            valid_equations.append(current_equation)
-    return sum([z.result for z in valid_equations])
-
-
-def part1_solve(input_data: list[str], terminators: list[Callable], calcs: dict) -> int:
-    return general_solve(input_data, terminators, calcs)
+def find_antennas(input_data):
+    current_node_sets = {}
+    for y in range(len(input_data)):
+        for x in range(len(input_data[y])):
+            point_value = input_data[y][x]
+            if point_value == '.':
+                continue
+            current_points = current_node_sets.get(point_value)
+            if current_points is None:
+                current_node_sets[point_value] = [(y, x)]
+                continue
+            current_points.append((y, x))
+            current_node_sets[point_value] = current_points
+    return current_node_sets
 
 
 def part2_solve(input_data: list[str], terminators: list[Callable], calcs: dict) -> int:
-    return general_solve(input_data, terminators, calcs)
+    # return general_solve(input_data, terminators, calcs)
+    pass
 
 
 def main() -> None:
@@ -85,19 +89,8 @@ def main() -> None:
     example = puzzle.examples.pop()
     example_input = example.input_data.splitlines()
 
-    terminators = [
-        lambda inputs: reduce(lambda x, y: x * y, inputs),
-        lambda inputs: reduce(lambda x, y: x + y, inputs)
-    ]
-    calcs = {
-        "*": lambda x, y: x * y,
-        "+": lambda x, y: x + y
-    }
-    if int(example.answer_a) == ic(part1_solve(example_input, terminators, calcs)):
-        puzzle.answer_a = ic(part1_solve(input_lines, terminators, calcs))
-
-    terminators.append(lambda inputs: join_all_values(inputs))
-    calcs["||"] = lambda x, y: join_all_values([x, y])
+    # if int(example.answer_a) == ic(part1_solve(example_input)):
+    #     puzzle.answer_a = ic(part1_solve(input_lines))
 
     if 11387 == ic(part2_solve(example_input, terminators, calcs)):
         puzzle.answer_b = ic(part2_solve(input_lines, terminators, calcs))

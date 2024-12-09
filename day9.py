@@ -39,21 +39,18 @@ def move_blocks(input_fs: FileSystem) -> list[int]:
     current_file_blocks = []
     current_empties = peekable(input_fs.emtpy_blocks)
     for (id, length) in input_fs.files.items():
-        file = "".join([str(z) for z in list(itertools.repeat(id, length))])
-        current_file_blocks.append(file)
+        file_blocks = list(itertools.repeat(id, length))
+        current_file_blocks = [*current_file_blocks, *file_blocks]
         if current_empties:
-            empties = "".join(list(itertools.repeat('.', next(current_empties))))
-            current_file_blocks.append(empties)
-
-    complete = list("".join(current_file_blocks))
-    while '.' in complete:
-        sizeof = len(complete)
-        location = complete.index('.')
-        complete[location] = complete[-1]
-        complete = complete[:sizeof - 1]
-
-    blocks = [int(index) for index in complete]
-    return blocks
+            empty_blocks = list(itertools.repeat(None, next(current_empties)))
+            current_file_blocks = [*current_file_blocks, *empty_blocks]
+    while None in current_file_blocks:
+        sizeof = len(current_file_blocks)
+        location = current_file_blocks.index(None)
+        last_item = current_file_blocks[-1]
+        current_file_blocks[location] = last_item
+        current_file_blocks = current_file_blocks[:sizeof - 1]
+    return current_file_blocks
 
 
 def part1_solve(input_data: str) -> int:
@@ -76,7 +73,7 @@ def main() -> None:
     if int(example.answer_a) == ic(part1_solve(example_input)):
         puzzle.answer_a = ic(part1_solve(input_lines))
 
-    # if 34 == ic(part2_solve(example_input)):
+    # if 2858 == ic(part2_solve(example_input)):
     #     puzzle.answer_b = ic(part2_solve(input_lines))
 
 

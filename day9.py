@@ -1,7 +1,7 @@
 import copy
 import itertools
 from _pyrepl.completing_reader import complete
-from collections import deque
+from collections import deque, Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import reduce
@@ -60,8 +60,50 @@ def part1_solve(input_data: str) -> int:
     return checksum
 
 
-def part2_solve(input_data: list[str]) -> int:
-    pass
+def move_files(input_fs: FileSystem) -> list[int]:
+    blocks_table = {}
+    current_empties = peekable(input_fs.emtpy_blocks)
+
+    def empties_key(id: int) -> str:
+        return f"empties_{id}"
+
+    last_block = 0
+    for (id, length) in input_fs.files.items():
+        blocks_table[id] = list(itertools.repeat(id, length))
+        if current_empties:
+            blocks_table[empties_key(id)] = list(itertools.repeat(None, next(current_empties)))
+        last_block += 1
+
+    last_block -= 1
+
+    # Moved blocks turn into empties so need to figure that out
+    while last_block > 1:
+        for index in range(len(input_fs.emtpy_blocks)):
+            current_empty = blocks_table[empties_key(index)]
+            if index - 1 >= last_block or not None in current_empty:
+                continue
+            current_file_blocks = blocks_table.get(last_block, None)
+            file_stats = Counter(current_empty)
+            if current_file_blocks is None:
+                break
+            if file_stats.get(None) < len(current_file_blocks):
+                continue
+            current_file_blocks = blocks_table.pop(last_block)
+            while len(current_file_blocks) > 0:
+                current_file_block = current_file_blocks.pop()
+                current_empty[current_empty.index(None)] = current_file_block
+        last_block -= 1
+
+    flat_blocks = [item for sublist in blocks_table.values() for item in sublist]
+    return flat_blocks
+
+
+def part2_solve(input_data: str) -> int:
+    current_fs = parse_input(input_data)
+    compressed_files = move_files(current_fs)
+    checksum = sum([index * compressed_files[index] for index in range(len(compressed_files)) if
+                    compressed_files[index] is not None])
+    return checksum
 
 
 def main() -> None:
@@ -70,11 +112,11 @@ def main() -> None:
     example = puzzle.examples.pop()
     example_input = example.input_data
 
-    if int(example.answer_a) == ic(part1_solve(example_input)):
-        puzzle.answer_a = ic(part1_solve(input_lines))
+    # if int(example.answer_a) == ic(part1_solve(example_input)):
+    #     puzzle.answer_a = ic(part1_solve(input_lines))
 
-    # if 2858 == ic(part2_solve(example_input)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 2858 == ic(part2_solve(example_input)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

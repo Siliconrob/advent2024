@@ -76,7 +76,6 @@ def move_files(input_fs: FileSystem) -> list[int]:
 
     last_block -= 1
 
-    # Moved blocks turn into empties so need to figure that out
     while last_block > 1:
         for index in range(len(input_fs.emtpy_blocks)):
             current_empty = blocks_table[empties_key(index)]
@@ -88,10 +87,12 @@ def move_files(input_fs: FileSystem) -> list[int]:
                 break
             if file_stats.get(None) < len(current_file_blocks):
                 continue
-            current_file_blocks = blocks_table.pop(last_block)
-            while len(current_file_blocks) > 0:
-                current_file_block = current_file_blocks.pop()
+            current_file_blocks = blocks_table.get(last_block)
+            for index in range(len(current_file_blocks)):
+                current_file_block = current_file_blocks[index]
                 current_empty[current_empty.index(None)] = current_file_block
+                current_file_blocks[index] = None
+
         last_block -= 1
 
     flat_blocks = [item for sublist in blocks_table.values() for item in sublist]
@@ -112,8 +113,8 @@ def main() -> None:
     example = puzzle.examples.pop()
     example_input = example.input_data
 
-    # if int(example.answer_a) == ic(part1_solve(example_input)):
-    #     puzzle.answer_a = ic(part1_solve(input_lines))
+    if int(example.answer_a) == ic(part1_solve(example_input)):
+        puzzle.answer_a = ic(part1_solve(input_lines))
 
     if 2858 == ic(part2_solve(example_input)):
         puzzle.answer_b = ic(part2_solve(input_lines))

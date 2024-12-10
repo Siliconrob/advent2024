@@ -24,7 +24,7 @@ class FileSystem:
     emtpy_blocks: list[int] = field(default_factory=list)
 
 
-def part1_solve(input_data: str) -> int:
+def parse_inputs(input_data):
     start_points = []
     data_points = []
     for y in range(len(input_data)):
@@ -35,10 +35,13 @@ def part1_solve(input_data: str) -> int:
                 start_points.append((y, x))
             data_rows.append(grid_value)
         data_points.append(data_rows)
-
     matrix = np.array(data_points)
     bounds = ic(matrix.shape)
+    return bounds, matrix, start_points
 
+
+def part1_solve(input_data: str) -> int:
+    bounds, matrix, start_points = parse_inputs(input_data)
     all_paths = {}
     for y, x in start_points:
         paths = {}
@@ -67,7 +70,38 @@ def part1_solve(input_data: str) -> int:
 
 
 def part2_solve(input_data: str) -> int:
-    pass
+    bounds, matrix, start_points = parse_inputs(input_data)
+    all_paths = {}
+    for y, x in start_points:
+        paths = {}
+        current_stack = deque([(y, x)])
+        while current_stack:
+            current_y, current_x = current_stack.pop()
+            neighbors = [
+                (current_y - 1, current_x),
+                (current_y + 1, current_x),
+                (current_y, current_x - 1),
+                (current_y, current_x + 1),
+            ]
+            current_value = matrix[current_y][current_x]
+            if current_value == 9:
+                id = f"({current_y},{current_x})"
+                current_paths = paths.get(id, None)
+                if current_paths is None:
+                    paths[id] = [current_stack]
+                else:
+                    current_paths.append(current_stack)
+            for pos_y, pos_x in neighbors:
+                if -1 < pos_y < bounds[0] and -1 < pos_x < bounds[1]:
+                    if current_value + 1 == matrix[pos_y][pos_x]:
+                        current_stack.append((pos_y, pos_x))
+        all_paths[f"({y},{x})"] = paths
+
+    total_paths = 0
+    for paths in all_paths.values():
+        for current_path in paths.values():
+            total_paths += len(current_path)
+    return total_paths
 
 
 def main() -> None:
@@ -86,8 +120,8 @@ def main() -> None:
     if int(example.answer_a) == ic(part1_solve(example_input)):
         puzzle.answer_a = ic(part1_solve(input_lines))
 
-    # if 2858 == ic(part2_solve(example_input)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 81 == ic(part2_solve(example_input)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

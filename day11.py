@@ -30,25 +30,10 @@ def split_string(input_text: str) -> list[str]:
 
 def general_solve(input_data: str, rounds: int) -> int:
     stones = input_data.split(" ")
-    blink_ops = [
-        lambda x: '1' if int(x) == 0 else None,
-        lambda x: split_string(x) if len(x) % 2 == 0 else None,
-        lambda x: str(int(x) * 2024)
-    ]
-
     for round in range(rounds):
         new_stones = []
         for stone in stones:
-            for op in blink_ops:
-                current_stones = op(stone)
-                if current_stones is None:
-                    continue
-                if type(current_stones) is list:
-                    new_stones.extend(current_stones)
-                else:
-                    new_stones.append(current_stones)
-                break
-        # ic(f"{round}: {new_stones}")
+            new_stones.extend(next_values(stone))
         ic(f"{round}")
         stones = new_stones
     return len(stones)

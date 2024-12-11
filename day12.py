@@ -115,7 +115,7 @@ def part2_solve(input_data: str) -> int:
 
 
 def main() -> None:
-    puzzle = Puzzle(year=2024, day=11)
+    puzzle = Puzzle(year=2024, day=12)
     input_lines = puzzle.input_data
     example = puzzle.examples.pop()
     example_input = "125 17"

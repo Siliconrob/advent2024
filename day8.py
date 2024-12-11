@@ -4,6 +4,8 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import reduce
+
+import numpy as np
 from aocd.models import Puzzle
 from icecream import ic
 from sympy import symbols, Function, Eq, Piecewise
@@ -134,9 +136,25 @@ def find_antennas(input_data):
 def part1_solve(input_data: list[str]) -> int:
     return general_solve(input_data, False)
 
+def mark_positions(y, x, dy, dx, the_grid):
+    bounds = the_grid.shape
+    while 0 <= y < bounds[0] and 0 <= x < bounds[1]:
+        the_grid[y, x] = 1
+        y += dy
+        x += dx
 
+# Watched this https://www.youtube.com/watch?v=HI2DbMq-t-Y and it is suprisingly clear
 def part2_solve(input_data: list[str]) -> int:
-    return general_solve(input_data, True)
+    matrix = np.array([list(row) for row in input_data])
+    bounds = matrix.shape
+    antenna_types = [antenna_type for antenna_type in np.unique(matrix) if antenna_type != "."]
+
+    anti_nodes = np.zeros((bounds[0], bounds[1]), int)
+    for antenna_type in antenna_types:
+        for locations1, locations2 in itertools.combinations(np.argwhere(matrix == antenna_type), r=2):
+            mark_positions(*locations1, *locations1 - locations2, anti_nodes)
+            mark_positions(*locations2, *locations2 - locations1, anti_nodes)
+    return anti_nodes.sum()
 
 
 def main() -> None:
@@ -145,25 +163,23 @@ def main() -> None:
     example = puzzle.examples.pop()
     example_input = example.input_data.splitlines()
 
-    example_input = """T.........
-...T......
-.T........
-..........
-..........
-..........
-..........
-..........
-..........
-..........
-"""
+#     example_input = """T.........
+# ...T......
+# .T........
+# ..........
+# ..........
+# ..........
+# ..........
+# ..........
+# ..........
+# ..........
+# """
 
     # if int(example.answer_a) == ic(part1_solve(example_input)):
     #     puzzle.answer_a = ic(part1_solve(input_lines))
 
-    ic(part2_solve(example_input.splitlines()))
-
-    # if 34 == ic(part2_solve(example_input)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 34 == ic(part2_solve(example_input)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

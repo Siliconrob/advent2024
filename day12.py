@@ -47,7 +47,7 @@ def expand_point(position: Tuple[int, int]) -> list[Tuple[int, int]]:
     ]
 
 
-def part1_solve(input_data: str) -> int:
+def general_solve(input_data: str, part_b: bool) -> int:
     plot_types = Counter("".join(input_data))
     matrix = np.array([list(line) for line in input_data], dtype=str)
     plant_plots = []
@@ -62,11 +62,50 @@ def part1_solve(input_data: str) -> int:
             wall_locations = list(flatten([expand_point(plot_location) for plot_location in plot_locations]))
             to_remove = [(plot_location[0], plot_location[1]) for plot_location in plot_locations]
             possible_walls = Counter(wall_locations)
-            walls = sum([value if poss_point not in to_remove else 0 for poss_point, value in possible_walls.items()])
+            if part_b:
+                wall_bounds = set([poss_point for poss_point, value in possible_walls.items() if poss_point not in to_remove])
+                y_axis = {}
+                x_axis = {}
+                for y, x in wall_bounds:
+                    current_y = y_axis.get(y, [])
+                    current_y.append((y, x))
+                    current_x = x_axis.get(x, [])
+                    current_x.append((y, x))
+                for y, y_locations in y_axis:
+                    matches = 0
+                    for x, x_locations in x_axis:
+                        if y_locations in x_locations:
+                            matches += 1
+                            break
+
+
+
+                #  Counter(wall_bounds)
+                #
+                # x = []
+                # y = []
+                # for bound in wall_bounds:
+                #     y.append(bound[0])
+                #     x.append(bound[1])
+                # compressed_walls = len(list(set(y))) + len(list(set(x)))
+
+                # walls = sum(
+                #     [value if poss_point not in to_remove else 0 for poss_point, value in possible_walls.items()])
+            else:
+                walls = sum(
+                    [value if poss_point not in to_remove else 0 for poss_point, value in possible_walls.items()])
             plant_plots.append(PlantPlot(plot_kind, len(to_remove), walls))
     ic(plant_plots)
     total_walls = sum([plant_plot.price() for plant_plot in plant_plots])
     return total_walls
+
+
+def part1_solve(input_data: str) -> int:
+    return general_solve(input_data, False)
+
+
+def part2_solve(input_data: str) -> int:
+    return general_solve(input_data, True)
 
 
 def main() -> None:
@@ -86,16 +125,16 @@ MIIIIIJJEE
 MIIISIJEEE
 MMMISSJEEE""".split("\n")
 
-    #     example_input = """AAAA
-    # BBCD
-    # BBCC
-    # EEEC""".splitlines()
+    example_input = """AAAA
+BBCD
+BBCC
+EEEC""".splitlines()
 
-    if int(example.answer_a) == ic(part1_solve(example_input)):
-        puzzle.answer_a = ic(part1_solve(input_lines))
+    # if int(example.answer_a) == ic(part1_solve(example_input)):
+    #     puzzle.answer_a = ic(part1_solve(input_lines))
 
-    # if int(example.answer_b) == ic(part2_solve(example_input)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 1206 == ic(part2_solve(example_input)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

@@ -64,33 +64,22 @@ def general_solve(input_data: str, part_b: bool) -> int:
             possible_walls = Counter(wall_locations)
             if part_b:
                 wall_bounds = set([poss_point for poss_point, value in possible_walls.items() if poss_point not in to_remove])
-                y_axis = {}
-                x_axis = {}
-                for y, x in wall_bounds:
-                    current_y = y_axis.get(y, [])
-                    current_y.append((y, x))
-                    current_x = x_axis.get(x, [])
-                    current_x.append((y, x))
-                for y, y_locations in y_axis:
-                    matches = 0
-                    for x, x_locations in x_axis:
-                        if y_locations in x_locations:
-                            matches += 1
-                            break
+                wall_counts = {}
+                y_axis = sorted({pos[0] for pos in wall_bounds})
+                for y in y_axis:
+                    x_axis = sorted(pos[1] for pos in wall_bounds if pos[0] == y)
+                    horizontal = sum((x_axis[i + 1] - x_axis[i]) > 1 for i in range(len(x_axis) - 1)) + 1
+                    vertical = sum((y_axis[i + 1] - y_axis[i]) > 1 for i in range(len(y_axis) - 1)) + 1
+                    z = horizontal + vertical
 
-
-
-                #  Counter(wall_bounds)
-                #
-                # x = []
-                # y = []
-                # for bound in wall_bounds:
-                #     y.append(bound[0])
-                #     x.append(bound[1])
-                # compressed_walls = len(list(set(y))) + len(list(set(x)))
-
-                # walls = sum(
-                #     [value if poss_point not in to_remove else 0 for poss_point, value in possible_walls.items()])
+                    # check_points = [(y, x_axis[i]) if (x_axis[i + 1] - x_axis[i]) > 1 else None for i in range(len(x_axis) - 1)]
+                    # if len(list(filter(lambda x: x is not None, check_points))) == 0:
+                    #     wall_counts[y] = 1
+                    # else:
+                    #     for check_point in check_points:
+                    #         ic(check_point)
+                    # wall_counts[y] = sum((x_axis[i + 1] - x_axis[i]) > 1 for i in range(len(x_axis) - 1)) + 1
+                walls = 0
             else:
                 walls = sum(
                     [value if poss_point not in to_remove else 0 for poss_point, value in possible_walls.items()])

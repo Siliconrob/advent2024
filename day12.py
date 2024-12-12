@@ -64,13 +64,26 @@ def general_solve(input_data: str, part_b: bool) -> int:
             possible_walls = Counter(wall_locations)
             if part_b:
                 wall_bounds = set([poss_point for poss_point, value in possible_walls.items() if poss_point not in to_remove])
-                wall_counts = {}
+
+
+                end_points = []
                 y_axis = sorted({pos[0] for pos in wall_bounds})
                 for y in y_axis:
                     x_axis = sorted(pos[1] for pos in wall_bounds if pos[0] == y)
                     horizontal = sum((x_axis[i + 1] - x_axis[i]) > 1 for i in range(len(x_axis) - 1)) + 1
+                    # Got to figure out the vertical segments from the horizontals
                     vertical = sum((y_axis[i + 1] - y_axis[i]) > 1 for i in range(len(y_axis) - 1)) + 1
-                    z = horizontal + vertical
+
+                    #
+                    # horizontal = [[(y, x_axis[i]), (y, x_axis[i+1])] if (x_axis[i + 1] - x_axis[i]) > 1 else None for i in range(len(x_axis) - 1)]
+                    # y_checks = list(filter(lambda x: x is not None, horizontal))
+                    # if len(y_checks) == 0:
+                    #     y_checks = [(y, min(x_axis)), (y, max(x_axis))]
+                    # end_points.append(y_checks)
+                # for end_point in end_points:
+
+                    # vertical = sum((y_axis[i + 1] - y_axis[i]) > 1 for i in range(len(y_axis) - 1)) + 1
+                    # z = horizontal + vertical
 
                     # check_points = [(y, x_axis[i]) if (x_axis[i + 1] - x_axis[i]) > 1 else None for i in range(len(x_axis) - 1)]
                     # if len(list(filter(lambda x: x is not None, check_points))) == 0:

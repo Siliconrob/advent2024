@@ -16,6 +16,7 @@ from more_itertools import peekable
 from more_itertools.recipes import flatten, pairwise
 from numpy.ma.core import empty, masked_array
 from scipy import ndimage
+from scipy.spatial import ConvexHull
 from shapely.geometry.polygon import Polygon, LinearRing
 from sympy import symbols, Function, Eq, Piecewise
 from sympy import solve
@@ -61,6 +62,9 @@ def general_solve(input_data: str, part_b: bool) -> int:
         plots, features = ndimage.measurements.label(masked_array)
         for feature_index in range(features):
             plot_locations = np.argwhere(plots == feature_index + 1)
+
+
+
             wall_locations = list(flatten([expand_point(plot_location) for plot_location in plot_locations]))
             to_remove = [(plot_location[0], plot_location[1]) for plot_location in plot_locations]
             possible_walls = Counter(wall_locations)
@@ -74,6 +78,9 @@ def general_solve(input_data: str, part_b: bool) -> int:
                     for x in x_axis:
                         row.append((y + 1, x + 1))
                     ordered.append(row)
+
+
+
                 rows = len(ordered) + 1
                 columns = 0
                 x_max = 0
@@ -86,6 +93,12 @@ def general_solve(input_data: str, part_b: bool) -> int:
                 for pos in flatten(ordered):
                     y, x = pos
                     bounds[y, x] = 1
+
+                k = np.array([[100, 0, 100], [100, 0, 100], [100, 100, 100]])
+                result = ndimage.convolve(bounds, k, mode='constant', cval=0.0)
+                # hull = ConvexHull(result)
+                # ic(hull.vertices)
+
                 bounds, features = ndimage.measurements.label(bounds)
                 walls[f"{plot_kind}_{feature_index}"] = features
             else:

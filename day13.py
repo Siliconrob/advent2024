@@ -12,12 +12,13 @@ from typing import Tuple
 import numpy as np
 from aocd.models import Puzzle
 from icecream import ic
-from more_itertools import peekable
+from more_itertools import peekable, strip
 from more_itertools.recipes import flatten, pairwise
 from numpy.ma.core import empty, masked_array
+from parse import parse
 from scipy import ndimage
 from shapely.geometry.polygon import Polygon, LinearRing
-from sympy import symbols, Function, Eq, Piecewise
+from sympy import symbols, Function, Eq, Piecewise, nsolve
 from sympy import solve
 
 f = Function('f')
@@ -25,104 +26,81 @@ from sympy.abc import x, y, z, a, b, c, d, e
 
 
 @dataclass
-class PlantPlot:
-    plant: str = None
-    area: int = 0
-    perimeter: int = 0
-
-    def price(self):
-        return self.area * self.perimeter
+class PrizeLocation:
+    X: int = 0
+    Y: int = 0
 
 
-def part2_solve(input_data: str) -> int:
+@dataclass
+class ButtonMove:
+    Name: str = None
+    MoveX: int = 0
+    MoveY: int = 0
+    TokenCost: int = 0
+
+
+@dataclass
+class ClawGame:
+    ButtonA: ButtonMove = field(default_factory=ButtonMove)
+    ButtonB: ButtonMove = field(default_factory=ButtonMove)
+    Prize: PrizeLocation = field(default_factory=PrizeLocation)
+
+    def solve(self) -> Tuple[int, int]:
+        x, y = symbols('x y')
+        ax = self.ButtonA.MoveX
+        ay = self.ButtonA.MoveY
+        bx = self.ButtonB.MoveX
+        by = self.ButtonB.MoveY
+        ans1 = self.Prize.X
+        ans2 = self.Prize.Y
+
+        equation1 = Eq(ax * x + bx * y, ans1)
+        equation2 = Eq(ay * x + by * y, ans2)
+        solution = solve((equation1, equation2), (x, y))
+
+        x_count = solution[x]
+        y_count = solution[y]
+        if x_count.is_Integer and y_count.is_Integer:
+            return x_count * self.ButtonA.TokenCost + y_count * self.ButtonB.TokenCost
+        return None
+
+
+def parse_button(button_input: str, tokens: int) -> ButtonMove:
+    button, x, y = parse("Button {:w}: X={:d}, Y={:d}", button_input.replace("+", "=").strip())
+    return ButtonMove(button, x, y, tokens)
+
+
+def parse_game(game_inputs: list[str]) -> ClawGame:
+    buttonA = parse_button(game_inputs[0], 3)
+    buttonB = parse_button(game_inputs[1], 1)
+    x, y = parse("Prize: X={:d}, Y={:d}", game_inputs[2])
+    prize = PrizeLocation(x, y)
+    return ClawGame(buttonA, buttonB, prize)
+
+
+def part2_solve(input_data_groups: list[str]) -> int:
+    game_inputs = [line_group.splitlines() for line_group in input_data_groups]
     pass
 
 
-def expand_point(position: Tuple[int, int]) -> list[Tuple[int, int]]:
-    y, x = position
-    return [
-        (y, x + 1),
-        (y, x - 1),
-        (y - 1, x),
-        (y + 1, x)
-    ]
-
-
-def general_solve(input_data: str, part_b: bool) -> int:
-    plot_types = Counter("".join(input_data))
-    matrix = np.array([list(line) for line in input_data], dtype=str)
-    plant_plots = []
-    walls = {}
-    for plot_kind, count in plot_types.most_common():
-        masked_array = np.zeros(matrix.shape)
-        points = np.argwhere(matrix == plot_kind)
-        for point in points:
-            masked_array[point[0], point[1]] = 1
-        plots, features = ndimage.measurements.label(masked_array)
-        for feature_index in range(features):
-            plot_locations = np.argwhere(plots == feature_index + 1)
-            wall_locations = list(flatten([expand_point(plot_location) for plot_location in plot_locations]))
-            to_remove = [(plot_location[0], plot_location[1]) for plot_location in plot_locations]
-            possible_walls = Counter(wall_locations)
-            if part_b:
-                wall_bounds = set([poss_point for poss_point, value in possible_walls.items() if poss_point not in to_remove])
-                ordered = []
-                y_axis = sorted({pos[0] for pos in wall_bounds})
-                for y in y_axis:
-                    row = []
-                    x_axis = sorted(pos[1] for pos in wall_bounds if pos[0] == y)
-                    for x in x_axis:
-                        row.append((y + 1, x + 1))
-                    ordered.append(row)
-                rows = len(ordered) + 1
-                columns = 0
-                x_max = 0
-                for row_index in range(len(ordered)):
-                    row = [pos[1] for pos in ordered[row_index]]
-                    current_x_max = max(row)
-                    x_max = current_x_max if current_x_max > x_max else x_max
-                columns = x_max + 1
-                bounds = np.zeros((rows, columns))
-                for pos in flatten(ordered):
-                    y, x = pos
-                    bounds[y, x] = 1
-                bounds, features = ndimage.measurements.label(bounds)
-                walls[f"{plot_kind}_{feature_index}"] = features
-            else:
-                walls = sum(
-                    [value if poss_point not in to_remove else 0 for poss_point, value in possible_walls.items()])
-                plant_plots.append(PlantPlot(plot_kind, len(to_remove), walls))
-    ic(plant_plots)
-    total_walls = sum([plant_plot.price() for plant_plot in plant_plots])
-    return total_walls
-
-
-def part1_solve(input_data: str) -> int:
-    return general_solve(input_data, False)
-
-
-def part2_solve(input_data: str) -> int:
-    return general_solve(input_data, True)
+def part1_solve(input_data_groups: list[str]) -> int:
+    games = [parse_game(line_group.splitlines()) for line_group in input_data_groups]
+    winning_games = {}
+    for game_index in range(len(games)):
+        game = games[game_index]
+        game_result = ic(game.solve())
+        if game_result is not None:
+            winning_games[game_index + 1] = game_result
+    return ic(sum(winning_games.values()))
 
 
 def main() -> None:
     puzzle = Puzzle(year=2024, day=13)
-    input_lines = puzzle.input_data.splitlines()
+    input_lines = puzzle.input_data.split("\n\n")
     example = puzzle.examples.pop()
-    # example_input = example.input_data
+    example_input = example.input_data.split("\n\n")
 
-    example_input = """RRRRIICCFF
-RRRRIICCCF
-VVRRRCCFFF
-VVRCCCJFFF
-VVVVCJJCFE
-VVIVCCJJEE
-VVIIICJJEE
-MIIIIIJJEE
-MIIISIJEEE
-MMMISSJEEE""".split("\n")
-
-    if int(example.answer_a) == ic(part1_solve(example_input)):
+    if 480 == ic(part1_solve(example_input)):
         puzzle.answer_a = ic(part1_solve(input_lines))
 
     # if 1206 == ic(part2_solve(example_input)):

@@ -52,19 +52,15 @@ class ClawGame:
     ButtonB: ButtonMove = field(default_factory=ButtonMove)
     Prize: PrizeLocation = field(default_factory=PrizeLocation)
 
-    def solve(self, is_part2: bool = False) -> int:
+    def solve(self) -> int:
         x = symbols('x', integer=True)
         y = symbols('y', integer=True)
         ax = self.ButtonA.MoveX
         ay = self.ButtonA.MoveY
         bx = self.ButtonB.MoveX
         by = self.ButtonB.MoveY
-        ans1 = self.Prize.X
-        ans2 = self.Prize.Y
-
-        if is_part2:
-            ans1 = self.Prize.get_x()
-            ans2 = self.Prize.get_y()
+        ans1 = self.Prize.get_x()
+        ans2 = self.Prize.get_y()
 
         equation1 = Eq(ax * x + bx * y, ans1)
         equation2 = Eq(ay * x + by * y, ans2)
@@ -95,7 +91,7 @@ def part2_solve(input_data_groups: list[str]) -> int:
     winning_games = {}
     for game_index in range(len(games)):
         game = games[game_index]
-        game_result = ic(game.solve(True))
+        game_result = ic(game.solve())
         if game_result is not None:
             winning_games[game_index + 1] = game_result
     return ic(sum(winning_games.values()))

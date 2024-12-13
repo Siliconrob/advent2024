@@ -137,7 +137,7 @@ def main() -> None:
 
     if 480 == ic(part1_solve(example_input)):
         puzzle.answer_a = ic(part1_solve(input_lines))
-    
+
     # if 875318608908 == ic(part2_solve(example_input)):
     #     puzzle.answer_b = ic(part2_solve(input_lines))
 

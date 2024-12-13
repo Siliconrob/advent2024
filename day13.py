@@ -52,28 +52,7 @@ class ClawGame:
     ButtonB: ButtonMove = field(default_factory=ButtonMove)
     Prize: PrizeLocation = field(default_factory=PrizeLocation)
 
-    def solve_part2(self) -> int:
-        x = symbols('x', integer=True)
-        y = symbols('y', integer=True)
-        ax = self.ButtonA.MoveX
-        ay = self.ButtonA.MoveY
-        bx = self.ButtonB.MoveX
-        by = self.ButtonB.MoveY
-        ans1 = self.Prize.get_x()
-        ans2 = self.Prize.get_y()
-
-        equation1 = Eq(ax * x + bx * y, ans1)
-        equation2 = Eq(ay * x + by * y, ans2)
-        solution = solve((equation1, equation2), (x, y))
-
-        if solution is None or len(solution) == 0:
-            return None
-
-        x_count = solution[x]
-        y_count = solution[y]
-        return x_count * self.ButtonA.TokenCost + y_count * self.ButtonB.TokenCost
-
-    def solve_part1(self) -> int:
+    def solve(self, is_part2: bool = False) -> int:
         x = symbols('x', integer=True)
         y = symbols('y', integer=True)
         ax = self.ButtonA.MoveX
@@ -83,12 +62,16 @@ class ClawGame:
         ans1 = self.Prize.X
         ans2 = self.Prize.Y
 
+        if is_part2:
+            ans1 = self.Prize.get_x()
+            ans2 = self.Prize.get_y()
+
         equation1 = Eq(ax * x + bx * y, ans1)
         equation2 = Eq(ay * x + by * y, ans2)
         solution = solve((equation1, equation2), (x, y))
+
         if solution is None or len(solution) == 0:
             return None
-
         x_count = solution[x]
         y_count = solution[y]
         return x_count * self.ButtonA.TokenCost + y_count * self.ButtonB.TokenCost
@@ -112,7 +95,7 @@ def part2_solve(input_data_groups: list[str]) -> int:
     winning_games = {}
     for game_index in range(len(games)):
         game = games[game_index]
-        game_result = ic(game.solve_part2())
+        game_result = ic(game.solve(True))
         if game_result is not None:
             winning_games[game_index + 1] = game_result
     return ic(sum(winning_games.values()))
@@ -123,7 +106,7 @@ def part1_solve(input_data_groups: list[str]) -> int:
     winning_games = {}
     for game_index in range(len(games)):
         game = games[game_index]
-        game_result = ic(game.solve_part1())
+        game_result = ic(game.solve())
         if game_result is not None:
             winning_games[game_index + 1] = game_result
     return ic(sum(winning_games.values()))

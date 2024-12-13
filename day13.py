@@ -86,8 +86,7 @@ def parse_game(game_inputs: list[str], prize_add=0) -> ClawGame:
     return ClawGame(buttonA, buttonB, prize)
 
 
-def part2_solve(input_data_groups: list[str]) -> int:
-    games = [parse_game(line_group.splitlines(), 10000000000000) for line_group in input_data_groups]
+def run_games(games):
     winning_games = {}
     for game_index in range(len(games)):
         game = games[game_index]
@@ -95,17 +94,14 @@ def part2_solve(input_data_groups: list[str]) -> int:
         if game_result is not None:
             winning_games[game_index + 1] = game_result
     return ic(sum(winning_games.values()))
+
+
+def part2_solve(input_data_groups: list[str]) -> int:
+    return run_games([parse_game(line_group.splitlines(), 10000000000000) for line_group in input_data_groups])
 
 
 def part1_solve(input_data_groups: list[str]) -> int:
-    games = [parse_game(line_group.splitlines()) for line_group in input_data_groups]
-    winning_games = {}
-    for game_index in range(len(games)):
-        game = games[game_index]
-        game_result = ic(game.solve())
-        if game_result is not None:
-            winning_games[game_index + 1] = game_result
-    return ic(sum(winning_games.values()))
+    return run_games([parse_game(line_group.splitlines()) for line_group in input_data_groups])
 
 
 def main() -> None:

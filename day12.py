@@ -13,9 +13,10 @@ import numpy as np
 from aocd.models import Puzzle
 from icecream import ic
 from more_itertools import peekable
-from more_itertools.recipes import flatten
+from more_itertools.recipes import flatten, pairwise
 from numpy.ma.core import empty, masked_array
 from scipy import ndimage
+from shapely.geometry.polygon import Polygon, LinearRing
 from sympy import symbols, Function, Eq, Piecewise
 from sympy import solve
 
@@ -51,6 +52,7 @@ def general_solve(input_data: str, part_b: bool) -> int:
     plot_types = Counter("".join(input_data))
     matrix = np.array([list(line) for line in input_data], dtype=str)
     plant_plots = []
+    walls = {}
     for plot_kind, count in plot_types.most_common():
         masked_array = np.zeros(matrix.shape)
         points = np.argwhere(matrix == plot_kind)
@@ -64,39 +66,32 @@ def general_solve(input_data: str, part_b: bool) -> int:
             possible_walls = Counter(wall_locations)
             if part_b:
                 wall_bounds = set([poss_point for poss_point, value in possible_walls.items() if poss_point not in to_remove])
-
-
-                end_points = []
+                ordered = []
                 y_axis = sorted({pos[0] for pos in wall_bounds})
                 for y in y_axis:
+                    row = []
                     x_axis = sorted(pos[1] for pos in wall_bounds if pos[0] == y)
-                    horizontal = sum((x_axis[i + 1] - x_axis[i]) > 1 for i in range(len(x_axis) - 1)) + 1
-                    # Got to figure out the vertical segments from the horizontals
-                    vertical = sum((y_axis[i + 1] - y_axis[i]) > 1 for i in range(len(y_axis) - 1)) + 1
-
-                    #
-                    # horizontal = [[(y, x_axis[i]), (y, x_axis[i+1])] if (x_axis[i + 1] - x_axis[i]) > 1 else None for i in range(len(x_axis) - 1)]
-                    # y_checks = list(filter(lambda x: x is not None, horizontal))
-                    # if len(y_checks) == 0:
-                    #     y_checks = [(y, min(x_axis)), (y, max(x_axis))]
-                    # end_points.append(y_checks)
-                # for end_point in end_points:
-
-                    # vertical = sum((y_axis[i + 1] - y_axis[i]) > 1 for i in range(len(y_axis) - 1)) + 1
-                    # z = horizontal + vertical
-
-                    # check_points = [(y, x_axis[i]) if (x_axis[i + 1] - x_axis[i]) > 1 else None for i in range(len(x_axis) - 1)]
-                    # if len(list(filter(lambda x: x is not None, check_points))) == 0:
-                    #     wall_counts[y] = 1
-                    # else:
-                    #     for check_point in check_points:
-                    #         ic(check_point)
-                    # wall_counts[y] = sum((x_axis[i + 1] - x_axis[i]) > 1 for i in range(len(x_axis) - 1)) + 1
-                walls = 0
+                    for x in x_axis:
+                        row.append((y + 1, x + 1))
+                    ordered.append(row)
+                rows = len(ordered) + 1
+                columns = 0
+                x_max = 0
+                for row_index in range(len(ordered)):
+                    row = [pos[1] for pos in ordered[row_index]]
+                    current_x_max = max(row)
+                    x_max = current_x_max if current_x_max > x_max else x_max
+                columns = x_max + 1
+                bounds = np.zeros((rows, columns))
+                for pos in flatten(ordered):
+                    y, x = pos
+                    bounds[y, x] = 1
+                bounds, features = ndimage.measurements.label(bounds)
+                walls[f"{plot_kind}_{feature_index}"] = features
             else:
                 walls = sum(
                     [value if poss_point not in to_remove else 0 for poss_point, value in possible_walls.items()])
-            plant_plots.append(PlantPlot(plot_kind, len(to_remove), walls))
+                plant_plots.append(PlantPlot(plot_kind, len(to_remove), walls))
     ic(plant_plots)
     total_walls = sum([plant_plot.price() for plant_plot in plant_plots])
     return total_walls

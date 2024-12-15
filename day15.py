@@ -20,8 +20,8 @@ from shapely.geometry.polygon import Polygon, LinearRing
 from sympy import symbols, Function, Eq, Piecewise, nsolve
 from sympy import solve
 
-f = Function('f')
-from sympy.abc import x, y, z, a, b, c, d, e
+# f = Function('f')
+# from sympy.abc import x, y, z, a, b, c, d, e
 
 
 @dataclass
@@ -75,6 +75,7 @@ def move_all(robots: list[Robot], grid: Grid) -> None:
     for robot in robots:
         robot.move_next(grid)
 
+
 # Make vectors of the start locations as a numpy array and then keep shifting
 # in place and mod the positions by the grid bounds
 def part2_solve(input_data: list[str], grid: Grid) -> int:
@@ -96,46 +97,115 @@ def within_bounds(robot: Robot, grid_bounds: Grid) -> bool:
     return is_in_x and is_in_y
 
 
-def part1_solve(input_data: list[str], grid: Grid, seconds: int) -> int:
-    robots = [parse_robot(x) for x in input_data]
-    second = 0
-    while second < seconds:
-        for robot in robots:
-            robot.move_next(grid)
-        second += 1
+def parse_inputs(input_data: str) -> Tuple[np.ndarray, deque[str]]:
+    input_segments = input_data.split("\n\n")
+    movements = deque(input_segments.pop())
+    input_map = input_segments.pop().splitlines()
+    grid = []
+    for row in input_map:
+        grid.append(list(row))
 
-    blocks = np.zeros((grid.max_y, grid.max_x))
-    update_blocks(blocks, robots)
-    midpoint_x = grid.max_x // 2
-    midpoint_y = grid.max_y // 2
-    blocks[midpoint_y, :] = 0
-    blocks[:, midpoint_x] = 0
+    map = np.array(grid, dtype=str)
+    return (map, movements)
 
-    quadrants = {
-        0: np.sum(blocks[:midpoint_y, :midpoint_x]),
-        1: np.sum(blocks[:midpoint_y, midpoint_x:]),
-        2: np.sum(blocks[midpoint_y:, :midpoint_x]),
-        3: np.sum(blocks[midpoint_y:, midpoint_x:])
+# def get_data(next_pos: Tuple[int, int], movement: str, the_map: np.ndarray) -> np.ndarray:
+
+
+def part1_solve(input_data: str) -> int:
+    map, movements = parse_inputs(input_data)
+
+    wall = '#'
+    box = 'O'
+    robot = '@'
+    empty = '.'
+
+    def get_robot_pos():
+        robot_y, robot_x = np.where(map == robot)
+        return robot_y[0], robot_x[0]
+
+    moves = {
+        "<": (0, -1), # left
+        "^": (-1, 0), # up
+        ">": (0, 1), # right
+        "v": (1, 0) # down
     }
-    quad_value = ic(reduce(lambda x, y: x * y, quadrants.values()))
-    return ic(quad_value)
+
+    while movements:
+        next_move = movements.popleft()
+        move_action = moves[next_move]
+        robot_pos = get_robot_pos()
+        next_pos = (move_action[0] + robot_pos[0], move_action[1] + robot_pos[1])
+        next_pos_data = map[next_pos[0]][next_pos[1]]
+        if next_pos_data == wall:
+            continue
+        if next_pos_data == empty:
+            map[robot_pos[0]][robot_pos[1]] = empty
+            map[next_pos[0]][next_pos[1]] = robot
+            continue
+
+        direction = 1
+        move_line = None
+        if next_move == '>':
+            move_line = map[robot_pos[0]][robot_pos[1] + 1:]
+        if next_move == '<':
+            move_line = map[robot_pos[0]][:robot_pos[1]]
+            direction = -1
+        if next_move == '^':
+            direction = -1
+            move_line = map[:, robot_pos[1]][0:robot_pos[0]]
+        if next_move == 'v':
+            move_line = map[:,robot_pos[1]][robot_pos[0] + 1:]
+
+        empties = np.where(move_line == empty)[0]
+        if len(empties) == 0:
+            continue
+        swap_index = 0
+
+
+        for i in range(1, len(move_line)):
+            current_item = move_line[i]
+            if direction == -1:
+                current_item = reversed(move_line)[i]
+            if current_item == wall:
+                break
+            if current_item == box:
+                continue
+            swap_index = i
+            break
+        move_line[swap_index] = box
+        map[next_pos[0]][next_pos[1]] = robot
+        map[robot_pos[0]][robot_pos[1]] = empty
+    return 0
+
 
 
 def main() -> None:
     puzzle = Puzzle(year=2024, day=15)
-    input_lines = puzzle.input_data.splitlines()
-    input_grid = Grid(max_x=101, max_y=103)
+    input_lines = puzzle.input_data
     example = puzzle.examples.pop()
-    example_input = example.input_data.splitlines()
+    example_input = example.input_data
 
     # example_input = "p=2,4 v=2,-3\n".splitlines()
-    example_grid = Grid(max_x=11, max_y=7)
 
-    seconds = 100
-    if 12 == ic(part1_solve(example_input, example_grid, seconds)):
-        puzzle.answer_a = ic(part1_solve(input_lines, input_grid, seconds))
+    limited_example_input = """########
+#..O.O.#
+##@.O..#
+#...O..#
+#.#.O..#
+#...O..#
+#......#
+########
 
-    puzzle.answer_b = ic(part2_solve(input_lines, input_grid))
+<^^>>>vv<v>>v<<"""
+
+    ic(part1_solve(limited_example_input))
+
+    # if (2028 == ic(part1_solve(limited_example_input))) and (10092 == ic(part1_solve(example_input))):
+    #     puzzle.answer_a = ic(part1_solve(input_lines))
+
+    # if 81 == ic(part2_solve(example_input)):
+    #     puzzle.answer_b =
+    return
 
 
 if __name__ == '__main__':

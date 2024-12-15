@@ -8,7 +8,6 @@ from dataclasses import dataclass, field
 import time
 from functools import reduce, cache
 from typing import Tuple
-
 import numpy as np
 from aocd.models import Puzzle
 from icecream import ic
@@ -55,7 +54,7 @@ class Robot:
 
     def move_next(self, the_grid: Grid):
         next_x = (self.location.x + self.move.delta_x) % the_grid.max_x
-        next_y = (self.location.y + self.move.delta_x * self.move.slope()) % the_grid.max_y
+        next_y = (self.location.y + self.move.delta_y) % the_grid.max_y
         self.location = Point(next_x, next_y)
 
 
@@ -64,8 +63,31 @@ def parse_robot(robot_inputs: list[str]) -> Robot:
     return Robot(Point(start_x, start_y), Move(move_x, move_y))
 
 
-def part2_solve(input_data: list[str]) -> int:
-    return 0
+def update_blocks(blocks: np.array, robots: list[Robot]) -> None:
+    for robot in robots:
+        x = robot.location.x
+        y = robot.location.y
+        current = blocks[y, x]
+        blocks[y, x] = current + 1
+
+
+def move_all(robots: list[Robot], grid: Grid) -> None:
+    for robot in robots:
+        robot.move_next(grid)
+
+# Make vectors of the start locations as a numpy array and then keep shifting
+# in place and mod the positions by the grid bounds
+def part2_solve(input_data: list[str], grid: Grid) -> int:
+    robots = [parse_robot(x) for x in input_data]
+    grid_shape = np.array([grid.max_x, grid.max_y])
+    start_locations = np.array([[r.location.x, r.location.y] for r in robots])
+    move_vectors = np.array([[r.move.delta_x, r.move.delta_y] for r in robots])
+    for step in itertools.count():
+        next_positions = (start_locations + step * move_vectors)
+        wrapped_positions = next_positions % grid_shape
+        if np.unique(wrapped_positions, axis=0).shape == start_locations.shape:
+            break
+    return step
 
 
 def within_bounds(robot: Robot, grid_bounds: Grid) -> bool:
@@ -83,13 +105,9 @@ def part1_solve(input_data: list[str], grid: Grid, seconds: int) -> int:
         second += 1
 
     blocks = np.zeros((grid.max_y, grid.max_x))
-    for robot in robots:
-        current = blocks[int(robot.location.y), int(robot.location.x)]
-        blocks[int(robot.location.y), int(robot.location.x)] = current + 1
-
+    update_blocks(blocks, robots)
     midpoint_x = grid.max_x // 2
     midpoint_y = grid.max_y // 2
-
     blocks[midpoint_y, :] = 0
     blocks[:, midpoint_x] = 0
 
@@ -117,8 +135,7 @@ def main() -> None:
     if 12 == ic(part1_solve(example_input, example_grid, seconds)):
         puzzle.answer_a = ic(part1_solve(input_lines, input_grid, seconds))
 
-    # if 875318608908 == ic(part2_solve(example_input)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    puzzle.answer_b = ic(part2_solve(input_lines, input_grid))
 
 
 if __name__ == '__main__':

@@ -87,9 +87,10 @@ class Computer:
     def run_instruction(self, opcode: Opcode, operand: int) -> None:
         combo_operand = self.retrieve_operand(operand)
 
+        numerator = self.registers.get('A')
+        denominator = pow(2, combo_operand) if combo_operand is not None else 1
+
         if opcode == Opcode.adv:
-            numerator = self.registers.get('A')
-            denominator = pow(2, combo_operand)
             self.registers['A'] = numerator // denominator
         if opcode == Opcode.bxl:
             self.registers['B'] = self.registers.get('B') ^ operand
@@ -104,12 +105,8 @@ class Computer:
         if opcode == Opcode.out:
             self.output.extend(list(str(combo_operand % 8)))
         if opcode == Opcode.bdv:
-            numerator = self.registers.get('A')
-            denominator = pow(2, combo_operand)
             self.registers['B'] = numerator // denominator
         if opcode == Opcode.cdv:
-            numerator = self.registers.get('A')
-            denominator = pow(2, combo_operand)
             self.registers['C'] = numerator // denominator
         self.instruction_ptr += 2
 
@@ -208,8 +205,8 @@ def main() -> None:
     if "4,6,3,5,6,3,5,2,1,0" == ic(part1_solve(example_input)):
         puzzle.answer_a = ic(part1_solve(input_lines))
 
-    # if 45 == ic(part2_solve(example_input)):
-    #     puzzle.answer_b = ic(part2_solve(input_lines))
+    if 117440 == ic(part2_solve(example_input)):
+        puzzle.answer_b = ic(part2_solve(input_lines))
 
 
 if __name__ == '__main__':

@@ -98,7 +98,7 @@ def part2_solve(input_data: str, grid_size: int) -> str:
 
 
 def main() -> None:
-    puzzle = Puzzle(year=2024, day=18)
+    puzzle = Puzzle(year=2024, day=19)
     input_lines = puzzle.input_data.splitlines()
     example = puzzle.examples.pop()
     example_input = example.input_data.splitlines()
@@ -106,8 +106,8 @@ def main() -> None:
     if 22 == ic(part1_solve(example_input, 7, 12)):
         puzzle.answer_a = ic(part1_solve(input_lines, 71, 1024))
 
-    if "6,1" == ic(part2_solve(example_input, 7)):
-        puzzle.answer_b = ic(part2_solve(input_lines, 71))
+    # if "6,1" == ic(part2_solve(example_input, 7)):
+    #     puzzle.answer_b = ic(part2_solve(input_lines, 71))
 
 
 if __name__ == '__main__':

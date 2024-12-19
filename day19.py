@@ -1,5 +1,6 @@
 import copy
 import enum
+import functools
 import itertools
 import sys
 from _pyrepl.completing_reader import complete
@@ -32,79 +33,56 @@ f = Function('f')
 from sympy.abc import x, y, z, a, b, c, d, e
 
 
-def find_path(current_grid: np.ndarray) -> networkx.Graph:
-    moves = [
-        (0, -1),  # left
-        (-1, 0),  # up
-        (0, 1),  # right
-        (1, 0)  # down
-    ]
-
-    wall = '#'
-
-    graph = nx.Graph()
-    g = nx.Graph()
-    max_y_bounds = current_grid.shape[0] - 1
-    max_x_bounds = current_grid.shape[1] - 1
-    start_node = f'0,0'
-    end_node = f'{max_y_bounds},{max_x_bounds}'
-
-    for (y, x), input_value in np.ndenumerate(current_grid):
-        if input_value == wall:
-            continue
-        current_node = f'{y},{x}'
-        if g.has_node(current_node) is False:
-            g.add_node(current_node, name=input_value)
-        for move in moves:
-            next_y, next_x = y + move[0], x + move[1]
-            if next_y < 0 or next_y > max_y_bounds:
-                continue
-            if next_x < 0 or next_x > max_x_bounds:
-                continue
-            next_pos_value = current_grid[next_y][next_x]
-            next_node = f'{next_y},{next_x}'
-            if next_pos_value != wall:
-                if g.has_node(next_node) is False:
-                    g.add_node(next_node, name=input_value)
-                g.add_edge(current_node, next_node)
-    return nx.shortest_path(g, start_node, end_node)
+def find_matches(search_pattern: str, towel_types: list[str]):
+    for towel in sorted(towel_types, key=lambda t: len(t), reverse=True):
+        if search_pattern.startswith(towel):
+            yield towel
 
 
-def part1_solve(input_data: str, grid_size: int, steps: int) -> int:
-    input_grid = np.zeros((grid_size, grid_size), dtype=str)
-    for coord in input_data:
-        if steps == 0:
-            break
-        x, y = parse("{:d},{:d}", coord)
-        input_grid[y, x] = '#'
-        steps -= 1
-    path = find_path(input_grid)
-    return len(path) - 1
+def run_matching(search_pattern: str, towel_types: list[str]):
+    current_matches = find_matches(search_pattern, towel_types)
+    if current_matches is None:
+        return None
+    partial_matches = deque([(current_match, search_pattern[len(current_match):]) for current_match in current_matches])
+    while partial_matches:
+        match_to_check = partial_matches.popleft()
+        k, v = match_to_check
+        next_matches = find_matches(v, towel_types)
+        for next_match in next_matches:
+            next_key = k + next_match
+            if next_key == search_pattern:
+                return search_pattern
+            partial_matches.append((k + next_match, v[len(next_match):]))
+    return None
+
+
+def part1_solve(input_segments: list[str]) -> int:
+    towel_types = [towel.strip() for towel in input_segments[0].split(',')]
+    searched = []
+
+    patterns = input_segments[1].splitlines()
+    for pattern_index in range(len(patterns)):
+        pattern = patterns[pattern_index]
+        searched.append(run_matching(pattern, towel_types))
+        ic(f'{pattern_index} of {len(patterns)} complete')
+    valid_patterns = len(list(filter(lambda x: x is not None, searched)))
+    return valid_patterns
 
 
 def part2_solve(input_data: str, grid_size: int) -> str:
-    input_grid = np.zeros((grid_size, grid_size), dtype=str)
-
-    blocking_coord = None
-    for coord in input_data:
-        x, y = parse("{:d},{:d}", coord)
-        input_grid[y, x] = '#'
-        try:
-            path = find_path(input_grid)
-        except networkx.exception.NetworkXNoPath:
-            blocking_coord = coord
-            break
-    return blocking_coord
+    return 0
 
 
 def main() -> None:
     puzzle = Puzzle(year=2024, day=19)
-    input_lines = puzzle.input_data.splitlines()
+    input_lines = puzzle.input_data.split('\n\n')
     example = puzzle.examples.pop()
-    example_input = example.input_data.splitlines()
+    example_input = example.input_data.split('\n\n')
 
-    if 22 == ic(part1_solve(example_input, 7, 12)):
-        puzzle.answer_a = ic(part1_solve(input_lines, 71, 1024))
+    if int(example.answer_a) == ic(part1_solve(example_input)):
+        puzzle.answer_a = ic(part1_solve(input_lines))
+    # if 22 == ic(part1_solve(example_input, 7, 12)):
+    #     puzzle.answer_a = ic(part1_solve(input_lines, 71, 1024))
 
     # if "6,1" == ic(part2_solve(example_input, 7)):
     #     puzzle.answer_b = ic(part2_solve(input_lines, 71))

@@ -67,10 +67,10 @@ def part2_solve(input_segments: list[str]) -> int:
 
 
 def main() -> None:
-    puzzle = Puzzle(year=2024, day=19)
-    input_lines = puzzle.input_data.split('\n\n')
+    puzzle = Puzzle(year=2024, day=20)
+    input_lines = puzzle.input_data.splitlines()
     example = puzzle.examples.pop()
-    example_input = example.input_data.split('\n\n')
+    example_input = example.input_data.splitlines()
 
     if int(example.answer_a) == ic(part1_solve(example_input)):
         puzzle.answer_a = ic(part1_solve(input_lines))

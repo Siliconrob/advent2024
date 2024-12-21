@@ -1,7 +1,7 @@
 # Advent of Code 2024 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 
-![](https://img.shields.io/badge/day%20📅-20-blue)
-![](https://img.shields.io/badge/stars%20⭐-36-yellow)
+![](https://img.shields.io/badge/day%20📅-21-blue)
+![](https://img.shields.io/badge/stars%20⭐-37-yellow)
 ![](https://img.shields.io/badge/days%20completed-17-red)
 
 - Using `PyCharm` with `Python 3.13`

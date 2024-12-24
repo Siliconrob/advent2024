@@ -1,6 +1,6 @@
 # Advent of Code 2024 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 
-![](https://img.shields.io/badge/day%20📅-23-blue)
+![](https://img.shields.io/badge/day%20📅-24-blue)
 ![](https://img.shields.io/badge/stars%20⭐-37-yellow)
 ![](https://img.shields.io/badge/days%20completed-17-red)
 
